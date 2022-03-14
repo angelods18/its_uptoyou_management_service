@@ -23,6 +23,8 @@ public class User extends EntityAbstract{
 	private String username;
 	private String password;
 	
+	private String email;
+	
 	private List<Authority> authorities;
 	
 	private Profile profile;
