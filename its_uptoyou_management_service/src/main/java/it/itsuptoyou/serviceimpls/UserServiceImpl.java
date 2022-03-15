@@ -1,10 +1,13 @@
 package it.itsuptoyou.serviceimpls;
 
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
 
@@ -18,11 +21,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import it.itsuptoyou.collections.Authority;
 import it.itsuptoyou.collections.RegisteringUser;
 import it.itsuptoyou.collections.User;
 import it.itsuptoyou.enums.AuthorityName;
+import it.itsuptoyou.models.Profile;
 import it.itsuptoyou.repositories.RegisteringUserRepository;
 import it.itsuptoyou.repositories.UserRepository;
 import it.itsuptoyou.service.CustomSequenceService;
@@ -132,9 +138,31 @@ public class UserServiceImpl implements UserService{
 		Authority authorityUser=new Authority();
 		authorityUser.setName(AuthorityName.ROLE_USER);
 		u.setAuthorities( Arrays.asList(new Authority[] {authorityUser}));
-		u.setAccountId(customSequenceService.generateSequence("customSequences", "user"));
+		u.setUserId(customSequenceService.generateSequence("customSequences", "user"));
 		
 		u=userRepository.save(u);
+		Map<String,Object> resp = mapper.convertValue(u, Map.class);
+		return resp;
+	}
+	
+	@Override
+	public Map<String, Object> updateUserProfile(Map<String, Object> updateProfileRequest) 
+			throws NumberFormatException, ClassNotFoundException, ConcurrentModificationException {
+		// TODO Auto-generated method stub
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.setDateFormat(new SimpleDateFormat("YYYY-MM-dd"));
+		mapper.registerModule(new JavaTimeModule());
+		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+		Profile profile = mapper.convertValue(updateProfileRequest.get("profile"), Profile.class);
+		User u = userRepository.findByUserId(Long.parseLong(updateProfileRequest.get("userId").toString()))
+				.orElseThrow(() -> new ClassNotFoundException("user"));
+		if(updateProfileRequest.get("version")!=u.getVersion()) {
+			throw new ConcurrentModificationException("version");
+		}
+		u.setProfile(profile);
+		u.setLastModifiedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+		u = userRepository.save(u);
+		
 		Map<String,Object> resp = mapper.convertValue(u, Map.class);
 		return resp;
 	}

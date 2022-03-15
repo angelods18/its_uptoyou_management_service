@@ -1,6 +1,7 @@
 package it.itsuptoyou.controllers;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +10,7 @@ import javax.xml.bind.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -61,5 +63,9 @@ public class UserController {
 		return ResponseEntity.ok(registeredUser);
 	}
 	
-	
+	@PatchMapping(value="/protected/update-profile")
+	public ResponseEntity<?> updateProfile(@RequestBody Map<String,Object> updateProfileRequest) throws NumberFormatException, ClassNotFoundException, ConcurrentModificationException{
+		Map<String,Object> user = userService.updateUserProfile(updateProfileRequest);
+		return ResponseEntity.ok(user);
+	}
 }

@@ -15,7 +15,7 @@ import lombok.Data;
 public class User extends EntityAbstract{
 	
 	@Indexed(unique=true)
-	private Long accountId;
+	private Long userId;
 	
 	private boolean enabled = true;
 	
