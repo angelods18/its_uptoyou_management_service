@@ -1,10 +1,12 @@
 package it.itsuptoyou.controllers;
 
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.ValidationException;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +17,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import it.itsuptoyou.collections.User;
 import it.itsuptoyou.service.UserService;
+import lombok.extern.log4j.Log4j2;
 
 @RestController
+@Log4j2
 public class UserController {
 
 	@Autowired
@@ -67,5 +72,12 @@ public class UserController {
 	public ResponseEntity<?> updateProfile(@RequestBody Map<String,Object> updateProfileRequest) throws NumberFormatException, ClassNotFoundException, ConcurrentModificationException{
 		Map<String,Object> user = userService.updateUserProfile(updateProfileRequest);
 		return ResponseEntity.ok(user);
+	}
+	
+	@GetMapping(value="/protected/profile")
+	public ResponseEntity<?> getProfile(HttpServletRequest request) throws ClassNotFoundException{
+		log.info(request.getHeader("username"));
+		User u = userService.getProfile(request.getHeader("username"));
+		return ResponseEntity.ok(u);
 	}
 }

@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.mail.MessagingException;
 import javax.xml.bind.ValidationException;
@@ -165,5 +166,12 @@ public class UserServiceImpl implements UserService{
 		
 		Map<String,Object> resp = mapper.convertValue(u, Map.class);
 		return resp;
+	}
+	
+	@Override
+	public User getProfile(String username) throws ClassNotFoundException {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByUsername(username).orElseThrow(() -> new ClassNotFoundException("user"));
+		return user;
 	}
 }
