@@ -28,9 +28,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import it.itsuptoyou.collections.Authority;
 import it.itsuptoyou.collections.RegisteringUser;
 import it.itsuptoyou.collections.User;
+import it.itsuptoyou.collections.UserOtp;
 import it.itsuptoyou.enums.AuthorityName;
 import it.itsuptoyou.models.Profile;
 import it.itsuptoyou.repositories.RegisteringUserRepository;
+import it.itsuptoyou.repositories.UserOtpRepository;
 import it.itsuptoyou.repositories.UserRepository;
 import it.itsuptoyou.service.CustomSequenceService;
 import it.itsuptoyou.service.UserService;
@@ -44,6 +46,9 @@ public class UserServiceImpl implements UserService{
 	
 	@Autowired
 	private RegisteringUserRepository registeringUserRepository;
+	
+	@Autowired
+	private UserOtpRepository userOtpRepository;
 	
 	@Autowired
 	private UserRepository userRepository;
@@ -173,5 +178,33 @@ public class UserServiceImpl implements UserService{
 		// TODO Auto-generated method stub
 		User user = userRepository.findByUsername(username).orElseThrow(() -> new ClassNotFoundException("user"));
 		return user;
+	}
+	
+@Override
+	public Boolean passwordRecovery(Map<String, Object> passwordRecoveryRequest)
+			throws ClassNotFoundException, NoSuchAlgorithmException {
+		// TODO Auto-generated method stub
+		User u = userRepository.findByEmail(passwordRecoveryRequest.get("email").toString()).orElseThrow(() -> new ClassNotFoundException("user"));
+		Optional<UserOtp> userOtp = userOtpRepository.findByUserId(u.getUserId());
+		UserOtp userOtpRequest= new UserOtp();
+		if(userOtp.isPresent()) {
+			userOtpRequest = userOtp.get();
+		}else {
+			userOtpRequest.setUserId(u.getUserId());
+		}
+		userOtpRequest.setOtp(secureCodeUtils.generateOtp());
+		userOtpRequest=userOtpRepository.save(userOtpRequest);
+		String message= "";
+		message = message + userOtpRequest.getOtp() ;
+		message = message + "";
+		
+		try {
+			emailSender.sendMessage(u.getEmail(), "It's up to you - Recupero password", message);
+		} catch (MessagingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return true;
 	}
 }

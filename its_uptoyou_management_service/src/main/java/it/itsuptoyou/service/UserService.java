@@ -17,4 +17,6 @@ public interface UserService {
 	Map<String, Object> updateUserProfile(Map<String,Object> updateProfileRequest) throws NumberFormatException, ClassNotFoundException, ConcurrentModificationException;
 
 	User getProfile(String username) throws ClassNotFoundException;
+	
+	Boolean passwordRecovery(Map<String,Object> passwordRecoveryRequest) throws ClassNotFoundException, NoSuchAlgorithmException;
 }

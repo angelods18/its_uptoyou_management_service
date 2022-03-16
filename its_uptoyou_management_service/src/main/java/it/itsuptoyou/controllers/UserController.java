@@ -80,4 +80,13 @@ public class UserController {
 		User u = userService.getProfile(request.getHeader("username"));
 		return ResponseEntity.ok(u);
 	}
+	
+	@PostMapping(value="/public/password-forgot")
+	public ResponseEntity<?> passwordForget(@RequestBody Map<String,Object> request) throws ClassNotFoundException, NoSuchAlgorithmException{
+		if(userService.passwordRecovery(request)) {
+			return ResponseEntity.ok("Procedura recupero password avviata");
+		}else {
+			return ResponseEntity.badRequest().build();
+		}
+	}
 }
