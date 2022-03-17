@@ -13,10 +13,11 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.mail.MessagingException;
-import javax.xml.bind.ValidationException;
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ import it.itsuptoyou.collections.RegisteringUser;
 import it.itsuptoyou.collections.User;
 import it.itsuptoyou.collections.UserOtp;
 import it.itsuptoyou.enums.AuthorityName;
+import it.itsuptoyou.exceptions.ValidationFailedException;
 import it.itsuptoyou.models.Profile;
 import it.itsuptoyou.repositories.RegisteringUserRepository;
 import it.itsuptoyou.repositories.UserOtpRepository;
@@ -75,7 +77,7 @@ public class UserServiceImpl implements UserService{
 	private String registrationFirstStepPart3;
 	
 	@Override
-	public Map<String, Object> firstStepRegistration(Map<String, Object> registrationRequest) throws NoSuchAlgorithmException, IllegalArgumentException, ValidationException {
+	public Map<String, Object> firstStepRegistration(Map<String, Object> registrationRequest) throws NoSuchAlgorithmException, IllegalArgumentException, ValidationFailedException {
 		// TODO Auto-generated method stub
 		ObjectMapper mapper = new ObjectMapper();
 		String email="";
@@ -87,7 +89,7 @@ public class UserServiceImpl implements UserService{
 			password = registrationRequest.get("password").toString();
 		}catch(NullPointerException e) {
 			log.error("null pointer " + e);
-			throw new ValidationException("email, username and password cannot be null");
+			throw new ValidationFailedException("user","email, username and password cannot be null");
 		}
 		
 		//check if email or username already exist
@@ -126,14 +128,14 @@ public class UserServiceImpl implements UserService{
 	}
 	
 	@Override
-	public Map<String, Object> secondStepRegistration(Map<String, Object> registrationRequest) throws ValidationException, ClassNotFoundException {
+	public Map<String, Object> secondStepRegistration(Map<String, Object> registrationRequest) throws ValidationFailedException, ClassNotFoundException {
 		// TODO Auto-generated method stub
 		ObjectMapper mapper = new ObjectMapper();
 		String secureCode="";
 		try {
 			 secureCode = registrationRequest.get("secureCode").toString();
 		}catch(NullPointerException np) {
-			throw new ValidationException("secureCode not found");
+			throw new ValidationFailedException("secureUser","secureCode not found");
 		}
 		//TODO decrypying del secureCode
 		RegisteringUser regUser = registeringUserRepository.findBySecureCode(secureCode).orElseThrow(() -> new ClassNotFoundException("registeringUser"));
@@ -183,7 +185,24 @@ public class UserServiceImpl implements UserService{
 		return user;
 	}
 	
-@Override
+	@Override
+	public Map<String, Object> getOtherprofile(long userId) throws ClassNotFoundException{
+		// TODO Auto-generated method stub
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.setDateFormat(new SimpleDateFormat("YYYY-MM-dd"));
+		mapper.registerModule(new JavaTimeModule());
+		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+		User user = userRepository.findByUserId(userId).orElseThrow(() -> new ClassNotFoundException("user"));
+		Map<String,Object> userMap = mapper.convertValue(user, Map.class);
+		userMap.remove("id");
+		userMap.remove("version");
+		userMap.remove("password");
+		userMap.remove("email");
+		userMap.remove("authorities");
+		return userMap;
+	}
+	
+	@Override
 	public Boolean passwordRecovery(Map<String, Object> passwordRecoveryRequest)
 			throws ClassNotFoundException, NoSuchAlgorithmException {
 		// TODO Auto-generated method stub
@@ -212,19 +231,40 @@ public class UserServiceImpl implements UserService{
 	}
 
 	@Override
-	public Boolean changePassword(Map<String, Object> changePasswordRequest) throws ClassNotFoundException, ValidationException {
+	public Boolean changePassword(Map<String, Object> changePasswordRequest, Boolean isLogged) throws ClassNotFoundException, ValidationFailedException {
 		// TODO Auto-generated method stub
-		String otp = changePasswordRequest.get("otp").toString();
-		User user = userRepository.findByEmail(changePasswordRequest.get("email").toString()).orElseThrow(() -> new ClassNotFoundException("user"));;
-		UserOtp userOtp = userOtpRepository.findByUserId(user.getUserId()).orElseThrow(() -> new ClassNotFoundException("userOtp"));
-		String oldPassword = user.getPassword();
-		if(passwordEncoder.matches(changePasswordRequest.get("password").toString(), oldPassword)) {
-			log.info("password match");
-			throw new ValidationException("password");
+		if(!isLogged) {
+			String otp = changePasswordRequest.get("otp").toString();
+			User user = userRepository.findByEmail(changePasswordRequest.get("email").toString()).orElseThrow(() -> new ClassNotFoundException("user"));
+			UserOtp userOtp = userOtpRepository.findByUserId(user.getUserId()).orElseThrow(() -> new ClassNotFoundException("userOtp"));
+			String oldPassword = user.getPassword();
+			if(passwordEncoder.matches(changePasswordRequest.get("password").toString(), oldPassword)) {
+				log.info("password match");
+				throw new ValidationFailedException("password","must be different");
+			}else {
+				if(userOtp.getOtp().equals(otp)) {
+					user.setPassword(passwordEncoder.encode(changePasswordRequest.get("password").toString()));
+					user.setLastModifiedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+					user = userRepository.save(user);
+					return true;
+				}else {
+					throw new ValidationFailedException("otp","wrong code");
+				}
+				
+			}
 		}else {
-			user.setPassword(passwordEncoder.encode(changePasswordRequest.get("password").toString()));
-			user = userRepository.save(user);
-			return true;
+			User user = userRepository.findByEmail(changePasswordRequest.get("email").toString()).orElseThrow(() -> new ClassNotFoundException("user"));
+			String oldPassword = user.getPassword();
+			if(passwordEncoder.matches(changePasswordRequest.get("password").toString(), oldPassword) || 
+					!passwordEncoder.matches(changePasswordRequest.get("oldPassword").toString(), oldPassword)) {
+				throw new ValidationFailedException("password","mismatch");
+			}else {
+				user.setPassword(passwordEncoder.encode(changePasswordRequest.get("password").toString()));
+				user.setLastModifiedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+				user = userRepository.save(user);
+				return true;
+			}
 		}
+		
 	}
 }
