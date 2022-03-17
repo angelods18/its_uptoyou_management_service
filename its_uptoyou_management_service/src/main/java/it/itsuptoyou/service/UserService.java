@@ -19,4 +19,6 @@ public interface UserService {
 	User getProfile(String username) throws ClassNotFoundException;
 	
 	Boolean passwordRecovery(Map<String,Object> passwordRecoveryRequest) throws ClassNotFoundException, NoSuchAlgorithmException;
+
+	Boolean changePassword(Map<String, Object> changePasswordRequest) throws ClassNotFoundException, ValidationException;
 }

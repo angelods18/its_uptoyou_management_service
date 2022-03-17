@@ -89,4 +89,13 @@ public class UserController {
 			return ResponseEntity.badRequest().build();
 		}
 	}
+	
+	@PostMapping(value="/public/change-password")
+	public ResponseEntity<?> changePassword(@RequestBody Map<String,Object> request) throws ClassNotFoundException, ValidationException{
+		if(userService.changePassword(request)) {
+			return ResponseEntity.ok("Cambio password avvenuto con successo");
+		}else {
+			return ResponseEntity.badRequest().build();
+		}
+	}
 }

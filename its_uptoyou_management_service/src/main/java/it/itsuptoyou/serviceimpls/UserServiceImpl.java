@@ -108,6 +108,8 @@ public class UserServiceImpl implements UserService{
 		newUser.setSecureCode(secureCode);
 		
 		newUser = registeringUserRepository.save(newUser);
+		
+		//TODO encrypting del secureCode
 		String message= registrationFirstStepPart1 + newUser.getUsername() + registrationFirstStepPart2;
 		message = message + "<a href="+ secureCode + ">qui</a>";
 		message = message + registrationFirstStepPart3;
@@ -133,6 +135,7 @@ public class UserServiceImpl implements UserService{
 		}catch(NullPointerException np) {
 			throw new ValidationException("secureCode not found");
 		}
+		//TODO decrypying del secureCode
 		RegisteringUser regUser = registeringUserRepository.findBySecureCode(secureCode).orElseThrow(() -> new ClassNotFoundException("registeringUser"));
 		
 		User u = new User();
@@ -206,5 +209,22 @@ public class UserServiceImpl implements UserService{
 		}
 		
 		return true;
+	}
+
+	@Override
+	public Boolean changePassword(Map<String, Object> changePasswordRequest) throws ClassNotFoundException, ValidationException {
+		// TODO Auto-generated method stub
+		String otp = changePasswordRequest.get("otp").toString();
+		User user = userRepository.findByEmail(changePasswordRequest.get("email").toString()).orElseThrow(() -> new ClassNotFoundException("user"));;
+		UserOtp userOtp = userOtpRepository.findByUserId(user.getUserId()).orElseThrow(() -> new ClassNotFoundException("userOtp"));
+		String oldPassword = user.getPassword();
+		if(passwordEncoder.matches(changePasswordRequest.get("password").toString(), oldPassword)) {
+			log.info("password match");
+			throw new ValidationException("password");
+		}else {
+			user.setPassword(passwordEncoder.encode(changePasswordRequest.get("password").toString()));
+			user = userRepository.save(user);
+			return true;
+		}
 	}
 }
