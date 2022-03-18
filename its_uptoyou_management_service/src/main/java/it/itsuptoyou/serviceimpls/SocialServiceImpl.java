@@ -5,6 +5,9 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,5 +96,59 @@ public class SocialServiceImpl implements SocialService{
 		//TODO implementare notifiche 
 		
 		return getMapper().convertValue(friendship, Map.class);
+	}
+	
+	@Override
+	public Map<String, Object> answerInvitation(String username, Map<String, Object> request) throws NotFoundException {
+		// TODO Auto-generated method stub
+		User userB = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("user"));
+		Friendship friendship = friendsRepository.findByUserAAndUserB( Long.parseLong(request.get("user").toString()), userB.getUserId())
+				.orElseThrow(()-> new NotFoundException("user"));
+		Friendship reverseFriendship = new Friendship();
+		if(request.get("answer").toString().equals(FriendshipStatus.ACCEPTED.name())) {
+			friendship.setStatus(FriendshipStatus.ACCEPTED);
+			friendship.setLastModifiedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+			friendship = friendsRepository.save(friendship);
+			reverseFriendship.setUserA(userB.getUserId());
+			reverseFriendship.setUserB(friendship.getUserA());
+			reverseFriendship.setStatus(FriendshipStatus.ACCEPTED);
+			reverseFriendship.setCreatedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+			reverseFriendship.setLastModifiedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+			reverseFriendship = friendsRepository.save(reverseFriendship);
+		}
+		if(request.get("answer").toString().equals(FriendshipStatus.REFUSED.name())) {
+			friendship.setStatus(FriendshipStatus.REFUSED);
+		}
+		return getMapper().convertValue(reverseFriendship, Map.class);
+	}
+	
+	@Override
+	public Map<String, Object> getPendingInvitation(String username) throws NotFoundException {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
+		List<Friendship> pendingInvitation = friendsRepository.findByUserAOrUserBAndStatus(user.getUserId(), user.getUserId(), FriendshipStatus.PENDING.name());
+		List<Friendship> sendByMeInvitation = new ArrayList<>();
+		List<Friendship> sendToMeInvitation = new ArrayList<>();
+		pendingInvitation.parallelStream().forEach((pi) -> {
+			if(pi.getUserA()==user.getUserId()) {
+				sendByMeInvitation.add(pi);
+			}else {
+				sendToMeInvitation.add(pi);
+			}
+		});
+		Map<String,Object> resp = new HashMap<>();
+		resp.put("sendByMeInvitation", sendByMeInvitation);
+		resp.put("sendToMeInvitation", sendToMeInvitation);
+		return resp;
+	}
+	
+	@Override
+	public Map<String, Object> getFriendList(String username) throws NotFoundException {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
+		List<Friendship> friendList = friendsRepository.findByUserAAndStatus(user.getUserId(), FriendshipStatus.ACCEPTED.name());
+		Map<String,Object> resp = new HashMap<>();
+		resp.put("friends", friendList);
+		return resp;
 	}
 }

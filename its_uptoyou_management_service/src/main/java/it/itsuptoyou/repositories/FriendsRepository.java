@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import it.itsuptoyou.collections.Friendship;
+import it.itsuptoyou.collections.Friendship.FriendshipStatus;
 
 public interface FriendsRepository extends MongoRepository<Friendship, String>{
 
@@ -17,4 +18,7 @@ public interface FriendsRepository extends MongoRepository<Friendship, String>{
 	
 	List<Friendship> findByUserAOrUserB(long userA);
 	
+	List<Friendship> findByUserAOrUserBAndStatus(long userA, long userB, String status);
+	
+	List<Friendship> findByUserAAndStatus(long userA, String status);
 }

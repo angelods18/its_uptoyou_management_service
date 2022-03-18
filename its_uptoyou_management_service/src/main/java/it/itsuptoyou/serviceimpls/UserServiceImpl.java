@@ -120,7 +120,7 @@ public class UserServiceImpl implements UserService{
 		newUser.setPassword(passwordEncoder.encode(password));
 		
 		newUser.setSecureCode(secureCode);
-		if(registrationRequest.containsKey("invitationCode")) {
+		if(registrationRequest.containsKey("invitationCode") && !registrationRequest.get("invitationCode").toString().isBlank()) {
 			newUser.setInvitationCode(registrationRequest.get("invitationCode").toString());
 		}
 		newUser = registeringUserRepository.save(newUser);
@@ -145,6 +145,9 @@ public class UserServiceImpl implements UserService{
 	public Map<String, Object> secondStepRegistration(Map<String, Object> registrationRequest) throws ValidationFailedException, NotFoundException {
 		// TODO Auto-generated method stub
 		ObjectMapper mapper = new ObjectMapper();
+		//mapper.setDateFormat(new SimpleDateFormat("YYYY-MM-ddTHH:mm:ss"));
+		mapper.registerModule(new JavaTimeModule());
+		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 		String secureCode="";
 		try {
 			 secureCode = registrationRequest.get("secureCode").toString();

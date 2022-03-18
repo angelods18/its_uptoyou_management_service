@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import it.itsuptoyou.exceptions.NotFoundException;
@@ -49,8 +50,39 @@ public class SocialController {
 	 * @throws NotFoundException
 	 */
 	@PostMapping(value="/protected/invite-friend")
-	public ResponseEntity<?> inviteFriend(HttpServletRequest request, Map<String,Object> requestBody) throws NotFoundException{
-		Map<String,Object> resp = new HashMap<>();
+	public ResponseEntity<?> inviteFriend(HttpServletRequest request,@RequestBody Map<String,Object> requestBody) throws NotFoundException{
+		Map<String,Object> resp = socialService.inviteFriend(request.getHeader("username"), requestBody);
+		return ResponseEntity.ok(resp);
+	}
+	
+	/**
+	 * answer a friend invitation ACCEPTED or REFUSED
+	 * @param request
+	 * @param requestBody username and answer ACCEPTED or REFUSED
+	 * @return
+	 * @throws NotFoundException
+	 */
+	@PostMapping(value="/protected/answer-invitation")
+	public ResponseEntity<?> answerInvitation(HttpServletRequest request, @RequestBody Map<String,Object> requestBody) throws NotFoundException{
+		Map<String,Object> resp = socialService.answerInvitation(request.getHeader("username"), requestBody);
+		return ResponseEntity.ok(resp);
+	}
+	
+	/**
+	 * get the list of pending invitation both to me and by me
+	 * @param request from gateway with header username
+	 * @return list of pendingToMe and pendingByMe
+	 * @throws NotFoundException
+	 */
+	@GetMapping(value="/protected/pending-invitation")
+	public ResponseEntity<?> getPendingInvitation(HttpServletRequest request) throws NotFoundException{
+		Map<String,Object> resp = socialService.getPendingInvitation(request.getHeader("username"));
+		return ResponseEntity.ok(resp);
+	}
+	
+	@GetMapping(value="/protected/friends")
+	public ResponseEntity<?> getFriendList(HttpServletRequest request) throws NotFoundException{
+		Map<String,Object> resp = socialService.getFriendList(request.getHeader("username"));
 		return ResponseEntity.ok(resp);
 	}
 }
