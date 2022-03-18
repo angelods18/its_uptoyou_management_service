@@ -11,6 +11,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.LookupOperation;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +26,7 @@ import it.itsuptoyou.collections.InvitationCode;
 import it.itsuptoyou.collections.User;
 import it.itsuptoyou.collections.Friendship.FriendshipStatus;
 import it.itsuptoyou.exceptions.NotFoundException;
+import it.itsuptoyou.models.FriendshipInfoPerUser;
 import it.itsuptoyou.repositories.FriendsRepository;
 import it.itsuptoyou.repositories.InvitationRepository;
 import it.itsuptoyou.repositories.UserRepository;
@@ -43,6 +48,9 @@ public class SocialServiceImpl implements SocialService{
 	
 	@Autowired
 	private SecureCodeUtils secureCodeUtils;
+	
+	@Autowired
+	private MongoTemplate mongoTemplate;
 	
 	private ObjectMapper getMapper() {
 		ObjectMapper mapper = new ObjectMapper();
@@ -146,9 +154,21 @@ public class SocialServiceImpl implements SocialService{
 	public Map<String, Object> getFriendList(String username) throws NotFoundException {
 		// TODO Auto-generated method stub
 		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
-		List<Friendship> friendList = friendsRepository.findByUserAAndStatus(user.getUserId(), FriendshipStatus.ACCEPTED.name());
+		LookupOperation lookupOperation = LookupOperation.newLookup()
+				.from(mongoTemplate.getCollectionName(User.class)).localField("userB")
+				.foreignField("userId").as("userB");
+		Aggregation aggregation = Aggregation.newAggregation(
+				Aggregation.match(Criteria.where("userA").is(user.getUserId()).and("status").is(FriendshipStatus.ACCEPTED.name())),
+				lookupOperation);
+		List<FriendshipInfoPerUser> friendList = mongoTemplate.aggregate(aggregation, mongoTemplate.getCollectionName(Friendship.class),
+				FriendshipInfoPerUser.class).getMappedResults();
+		List<User> friends = new ArrayList<>();
+		friendList.parallelStream().forEach((fl) ->{
+			friends.add(fl.removePrivateInfoFromUserB());
+		});
+		//List<User> friends = friendList.removePrivateInfoFromUserB();
 		Map<String,Object> resp = new HashMap<>();
-		resp.put("friends", friendList);
+		resp.put("friends", friends);
 		return resp;
 	}
 }

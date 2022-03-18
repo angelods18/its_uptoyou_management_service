@@ -1,5 +1,6 @@
 package it.itsuptoyou.collections;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
@@ -28,4 +29,11 @@ public class User extends EntityAbstract{
 	private List<Authority> authorities;
 	
 	private Profile profile;
+	
+	public User protectPrivateInfo(User u) {
+		u.setPassword(null);
+		u.setAuthorities(new ArrayList<>());
+		u.setEmail(null);
+		return u;
+	}
 }
