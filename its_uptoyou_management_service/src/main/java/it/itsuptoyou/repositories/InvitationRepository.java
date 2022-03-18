@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import it.itsuptoyou.models.InvitationCode;
+import it.itsuptoyou.collections.InvitationCode;
 
 public interface InvitationRepository extends MongoRepository<InvitationCode,String>{
 

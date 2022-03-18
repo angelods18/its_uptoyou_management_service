@@ -1,4 +1,4 @@
-package it.itsuptoyou.models;
+package it.itsuptoyou.collections;
 
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;

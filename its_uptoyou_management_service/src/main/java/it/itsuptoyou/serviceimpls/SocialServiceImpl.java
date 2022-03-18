@@ -14,9 +14,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import it.itsuptoyou.collections.Friendship;
+import it.itsuptoyou.collections.InvitationCode;
 import it.itsuptoyou.collections.User;
+import it.itsuptoyou.collections.Friendship.FriendshipStatus;
 import it.itsuptoyou.exceptions.NotFoundException;
-import it.itsuptoyou.models.InvitationCode;
+import it.itsuptoyou.repositories.FriendsRepository;
 import it.itsuptoyou.repositories.InvitationRepository;
 import it.itsuptoyou.repositories.UserRepository;
 import it.itsuptoyou.service.CustomSequenceService;
@@ -33,15 +36,23 @@ public class SocialServiceImpl implements SocialService{
 	private InvitationRepository invitationRepository;
 	
 	@Autowired
+	private FriendsRepository friendsRepository;
+	
+	@Autowired
 	private SecureCodeUtils secureCodeUtils;
 	
-	@Override
-	public Map<String, Object> generateInvitationCode(String username) throws NotFoundException {
-		// TODO Auto-generated method stub
+	private ObjectMapper getMapper() {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDateFormat(new SimpleDateFormat("YYYY-MM-dd"));
 		mapper.registerModule(new JavaTimeModule());
 		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+		return mapper;
+	}
+	
+	@Override
+	public Map<String, Object> generateInvitationCode(String username) throws NotFoundException {
+		// TODO Auto-generated method stub
+		
 		
 		User u = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("user"));
 		
@@ -62,7 +73,25 @@ public class SocialServiceImpl implements SocialService{
 		}
 		
 		
-		Map<String,Object> resp = mapper.convertValue(invitationCode, Map.class);
+		Map<String,Object> resp = getMapper().convertValue(invitationCode, Map.class);
 		return resp;
+	}
+	
+	@Override
+	public Map<String, Object> inviteFriend(String username, Map<String, Object> request) throws NotFoundException {
+		// TODO Auto-generated method stub
+		User userA = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("user"));
+		User userB = userRepository.findByUsername(request.get("username").toString()).orElseThrow(() -> new NotFoundException("user"));
+		Friendship friendship = new Friendship();
+		friendship.setUserA(userA.getUserId());
+		friendship.setUserB(userB.getUserId());
+		friendship.setStatus(FriendshipStatus.PENDING);
+		friendship.setCreatedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+		friendship.setLastModifiedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+		friendship = friendsRepository.save(friendship);
+		
+		//TODO implementare notifiche 
+		
+		return getMapper().convertValue(friendship, Map.class);
 	}
 }

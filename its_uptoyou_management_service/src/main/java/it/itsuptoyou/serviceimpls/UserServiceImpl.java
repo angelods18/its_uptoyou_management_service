@@ -27,14 +27,17 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import it.itsuptoyou.collections.Authority;
+import it.itsuptoyou.collections.Friendship;
+import it.itsuptoyou.collections.InvitationCode;
+import it.itsuptoyou.collections.Friendship.FriendshipStatus;
 import it.itsuptoyou.collections.RegisteringUser;
 import it.itsuptoyou.collections.User;
 import it.itsuptoyou.collections.UserOtp;
 import it.itsuptoyou.enums.AuthorityName;
 import it.itsuptoyou.exceptions.NotFoundException;
 import it.itsuptoyou.exceptions.ValidationFailedException;
-import it.itsuptoyou.models.InvitationCode;
 import it.itsuptoyou.models.Profile;
+import it.itsuptoyou.repositories.FriendsRepository;
 import it.itsuptoyou.repositories.InvitationRepository;
 import it.itsuptoyou.repositories.RegisteringUserRepository;
 import it.itsuptoyou.repositories.UserOtpRepository;
@@ -60,6 +63,9 @@ public class UserServiceImpl implements UserService{
 	
 	@Autowired
 	private InvitationRepository invitationRepository;
+	
+	@Autowired
+	private FriendsRepository friendsRepository;
 	
 	@Autowired
 	private CustomSequenceService customSequenceService;
@@ -168,6 +174,7 @@ public class UserServiceImpl implements UserService{
 				Optional<User> invitingUser = userRepository.findByUserId(invCode.get().getUserId());
 				if(invitingUser.isPresent()) {
 					//amicizia reciproca più eventuali bonus all'utente che lo ha invitato
+					saveFriendship(u.getUserId(), invitingUser.get().getUserId());
 				}
 			}
 		}
@@ -286,7 +293,21 @@ public class UserServiceImpl implements UserService{
 		
 	}
 	
-	private void saveFriendship(long userA, long userB) {
-		
+	private Friendship saveFriendship(long userA, long userB) {
+		Friendship friendshipAtoB = new Friendship();
+		Friendship friendshipBtoA = new Friendship();
+		friendshipAtoB.setUserA(userA);
+		friendshipAtoB.setUserB(userB);
+		friendshipAtoB.setStatus(FriendshipStatus.ACCEPTED);
+		friendshipAtoB.setCreatedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+		friendshipAtoB.setLastModifiedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+		friendshipBtoA.setUserA(userB);
+		friendshipBtoA.setUserB(userA);
+		friendshipBtoA.setStatus(FriendshipStatus.ACCEPTED);
+		friendshipBtoA.setCreatedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+		friendshipBtoA.setLastModifiedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+		log.info("saving friendship between user :" + userA + " and user: " + userB);
+		friendsRepository.save(friendshipBtoA);
+		return friendsRepository.save(friendshipAtoB);
 	}
 }
