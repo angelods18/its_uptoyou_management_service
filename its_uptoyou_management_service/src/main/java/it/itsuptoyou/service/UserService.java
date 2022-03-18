@@ -7,22 +7,23 @@ import java.util.Map;
 import javax.xml.bind.ValidationException;
 
 import it.itsuptoyou.collections.User;
+import it.itsuptoyou.exceptions.NotFoundException;
 import it.itsuptoyou.exceptions.ValidationFailedException;
 
 public interface UserService {
 
 	Map<String,Object> firstStepRegistration(Map<String,Object> registrationRequest) throws NoSuchAlgorithmException,ValidationFailedException, IllegalArgumentException;
 
-	Map<String,Object> secondStepRegistration(Map<String,Object> registrationRequest) throws ValidationFailedException, ClassNotFoundException;
+	Map<String,Object> secondStepRegistration(Map<String,Object> registrationRequest) throws ValidationFailedException, NotFoundException;
 
-	Map<String, Object> updateUserProfile(Map<String,Object> updateProfileRequest) throws NumberFormatException, ClassNotFoundException, ConcurrentModificationException;
+	Map<String, Object> updateUserProfile(Map<String,Object> updateProfileRequest) throws NumberFormatException, NotFoundException, ConcurrentModificationException;
 
-	User getProfile(String username) throws ClassNotFoundException;
+	User getProfile(String username) throws NotFoundException;
 	
-	Map<String,Object> getOtherprofile(long userId) throws ClassNotFoundException;
+	Map<String,Object> getOtherprofile(long userId) throws NotFoundException;
 	
-	Boolean passwordRecovery(Map<String,Object> passwordRecoveryRequest) throws ClassNotFoundException, NoSuchAlgorithmException;
+	Boolean passwordRecovery(Map<String,Object> passwordRecoveryRequest) throws NotFoundException, NoSuchAlgorithmException;
 
-	Boolean changePassword(Map<String, Object> changePasswordRequest, Boolean isLogged) throws ClassNotFoundException, ValidationFailedException;
+	Boolean changePassword(Map<String, Object> changePasswordRequest, Boolean isLogged) throws NotFoundException, ValidationFailedException;
 	
 }

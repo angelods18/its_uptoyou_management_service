@@ -25,4 +25,6 @@ public class RegisteringUser extends EntityAbstract{
 	private String password;
 	
 	private String secureCode;
+	
+	private String invitationCode;
 }

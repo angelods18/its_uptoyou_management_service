@@ -24,6 +24,21 @@ public class SecureCodeUtils {
 		return customTag;
 	}
 	
+	public String generateSecureCode(int length) throws NoSuchAlgorithmException {
+		SecureRandom secureRandom = SecureRandom.getInstanceStrong();
+	    String customTag = secureRandom.ints(length, 0, chars.length()).mapToObj(i -> chars.charAt(i))
+	      .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString();
+	    log.info(customTag);
+		return customTag;
+	}
+	
+	public String generateInvitationSuffix() throws NoSuchAlgorithmException {
+		SecureRandom secureRandom = SecureRandom.getInstanceStrong();
+		String code = secureRandom.ints(3,0, numbers.length()).mapToObj(i -> chars.charAt(i))
+	      .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString();
+		return code;
+	}
+	
 	public String generateOtp() throws NoSuchAlgorithmException {
 		SecureRandom secureRandom = SecureRandom.getInstanceStrong();
 		String otp = secureRandom.ints(6,0, numbers.length()).mapToObj(i -> chars.charAt(i))

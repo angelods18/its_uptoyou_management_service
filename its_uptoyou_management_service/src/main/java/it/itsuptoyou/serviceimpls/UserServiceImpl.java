@@ -31,8 +31,11 @@ import it.itsuptoyou.collections.RegisteringUser;
 import it.itsuptoyou.collections.User;
 import it.itsuptoyou.collections.UserOtp;
 import it.itsuptoyou.enums.AuthorityName;
+import it.itsuptoyou.exceptions.NotFoundException;
 import it.itsuptoyou.exceptions.ValidationFailedException;
+import it.itsuptoyou.models.InvitationCode;
 import it.itsuptoyou.models.Profile;
+import it.itsuptoyou.repositories.InvitationRepository;
 import it.itsuptoyou.repositories.RegisteringUserRepository;
 import it.itsuptoyou.repositories.UserOtpRepository;
 import it.itsuptoyou.repositories.UserRepository;
@@ -54,6 +57,9 @@ public class UserServiceImpl implements UserService{
 	
 	@Autowired
 	private UserRepository userRepository;
+	
+	@Autowired
+	private InvitationRepository invitationRepository;
 	
 	@Autowired
 	private CustomSequenceService customSequenceService;
@@ -108,10 +114,12 @@ public class UserServiceImpl implements UserService{
 		newUser.setPassword(passwordEncoder.encode(password));
 		
 		newUser.setSecureCode(secureCode);
-		
+		if(registrationRequest.containsKey("invitationCode")) {
+			newUser.setInvitationCode(registrationRequest.get("invitationCode").toString());
+		}
 		newUser = registeringUserRepository.save(newUser);
 		
-		//TODO encrypting del secureCode
+		//TODO encrypting del secureCode dentro l'URL
 		String message= registrationFirstStepPart1 + newUser.getUsername() + registrationFirstStepPart2;
 		message = message + "<a href="+ secureCode + ">qui</a>";
 		message = message + registrationFirstStepPart3;
@@ -128,7 +136,7 @@ public class UserServiceImpl implements UserService{
 	}
 	
 	@Override
-	public Map<String, Object> secondStepRegistration(Map<String, Object> registrationRequest) throws ValidationFailedException, ClassNotFoundException {
+	public Map<String, Object> secondStepRegistration(Map<String, Object> registrationRequest) throws ValidationFailedException, NotFoundException {
 		// TODO Auto-generated method stub
 		ObjectMapper mapper = new ObjectMapper();
 		String secureCode="";
@@ -137,8 +145,7 @@ public class UserServiceImpl implements UserService{
 		}catch(NullPointerException np) {
 			throw new ValidationFailedException("secureUser","secureCode not found");
 		}
-		//TODO decrypying del secureCode
-		RegisteringUser regUser = registeringUserRepository.findBySecureCode(secureCode).orElseThrow(() -> new ClassNotFoundException("registeringUser"));
+		RegisteringUser regUser = registeringUserRepository.findBySecureCode(secureCode).orElseThrow(() -> new NotFoundException("registeringUser"));
 		
 		User u = new User();
 		u.setCreatedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
@@ -153,12 +160,23 @@ public class UserServiceImpl implements UserService{
 		
 		u=userRepository.save(u);
 		Map<String,Object> resp = mapper.convertValue(u, Map.class);
+		
+		if(regUser.getInvitationCode()!=null) {
+			
+			Optional<InvitationCode> invCode = invitationRepository.findByInvitationCode(regUser.getInvitationCode());
+			if(invCode.isPresent()) {
+				Optional<User> invitingUser = userRepository.findByUserId(invCode.get().getUserId());
+				if(invitingUser.isPresent()) {
+					//amicizia reciproca più eventuali bonus all'utente che lo ha invitato
+				}
+			}
+		}
 		return resp;
 	}
 	
 	@Override
 	public Map<String, Object> updateUserProfile(Map<String, Object> updateProfileRequest) 
-			throws NumberFormatException, ClassNotFoundException, ConcurrentModificationException {
+			throws NumberFormatException, NotFoundException, ConcurrentModificationException {
 		// TODO Auto-generated method stub
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDateFormat(new SimpleDateFormat("YYYY-MM-dd"));
@@ -166,7 +184,7 @@ public class UserServiceImpl implements UserService{
 		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 		Profile profile = mapper.convertValue(updateProfileRequest.get("profile"), Profile.class);
 		User u = userRepository.findByUserId(Long.parseLong(updateProfileRequest.get("userId").toString()))
-				.orElseThrow(() -> new ClassNotFoundException("user"));
+				.orElseThrow(() -> new NotFoundException("user"));
 		if(updateProfileRequest.get("version")!=u.getVersion()) {
 			throw new ConcurrentModificationException("version");
 		}
@@ -179,20 +197,20 @@ public class UserServiceImpl implements UserService{
 	}
 	
 	@Override
-	public User getProfile(String username) throws ClassNotFoundException {
+	public User getProfile(String username) throws NotFoundException {
 		// TODO Auto-generated method stub
-		User user = userRepository.findByUsername(username).orElseThrow(() -> new ClassNotFoundException("user"));
+		User user = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("user"));
 		return user;
 	}
 	
 	@Override
-	public Map<String, Object> getOtherprofile(long userId) throws ClassNotFoundException{
+	public Map<String, Object> getOtherprofile(long userId) throws NotFoundException{
 		// TODO Auto-generated method stub
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDateFormat(new SimpleDateFormat("YYYY-MM-dd"));
 		mapper.registerModule(new JavaTimeModule());
 		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-		User user = userRepository.findByUserId(userId).orElseThrow(() -> new ClassNotFoundException("user"));
+		User user = userRepository.findByUserId(userId).orElseThrow(() -> new NotFoundException("user"));
 		Map<String,Object> userMap = mapper.convertValue(user, Map.class);
 		userMap.remove("id");
 		userMap.remove("version");
@@ -204,9 +222,9 @@ public class UserServiceImpl implements UserService{
 	
 	@Override
 	public Boolean passwordRecovery(Map<String, Object> passwordRecoveryRequest)
-			throws ClassNotFoundException, NoSuchAlgorithmException {
+			throws NotFoundException, NoSuchAlgorithmException {
 		// TODO Auto-generated method stub
-		User u = userRepository.findByEmail(passwordRecoveryRequest.get("email").toString()).orElseThrow(() -> new ClassNotFoundException("user"));
+		User u = userRepository.findByEmail(passwordRecoveryRequest.get("email").toString()).orElseThrow(() -> new NotFoundException("user"));
 		Optional<UserOtp> userOtp = userOtpRepository.findByUserId(u.getUserId());
 		UserOtp userOtpRequest= new UserOtp();
 		if(userOtp.isPresent()) {
@@ -231,12 +249,12 @@ public class UserServiceImpl implements UserService{
 	}
 
 	@Override
-	public Boolean changePassword(Map<String, Object> changePasswordRequest, Boolean isLogged) throws ClassNotFoundException, ValidationFailedException {
+	public Boolean changePassword(Map<String, Object> changePasswordRequest, Boolean isLogged) throws NotFoundException, ValidationFailedException {
 		// TODO Auto-generated method stub
 		if(!isLogged) {
 			String otp = changePasswordRequest.get("otp").toString();
-			User user = userRepository.findByEmail(changePasswordRequest.get("email").toString()).orElseThrow(() -> new ClassNotFoundException("user"));
-			UserOtp userOtp = userOtpRepository.findByUserId(user.getUserId()).orElseThrow(() -> new ClassNotFoundException("userOtp"));
+			User user = userRepository.findByEmail(changePasswordRequest.get("email").toString()).orElseThrow(() -> new NotFoundException("user"));
+			UserOtp userOtp = userOtpRepository.findByUserId(user.getUserId()).orElseThrow(() -> new NotFoundException("userOtp"));
 			String oldPassword = user.getPassword();
 			if(passwordEncoder.matches(changePasswordRequest.get("password").toString(), oldPassword)) {
 				log.info("password match");
@@ -253,7 +271,7 @@ public class UserServiceImpl implements UserService{
 				
 			}
 		}else {
-			User user = userRepository.findByEmail(changePasswordRequest.get("email").toString()).orElseThrow(() -> new ClassNotFoundException("user"));
+			User user = userRepository.findByEmail(changePasswordRequest.get("email").toString()).orElseThrow(() -> new NotFoundException("user"));
 			String oldPassword = user.getPassword();
 			if(passwordEncoder.matches(changePasswordRequest.get("password").toString(), oldPassword) || 
 					!passwordEncoder.matches(changePasswordRequest.get("oldPassword").toString(), oldPassword)) {
@@ -265,6 +283,10 @@ public class UserServiceImpl implements UserService{
 				return true;
 			}
 		}
+		
+	}
+	
+	private void saveFriendship(long userA, long userB) {
 		
 	}
 }

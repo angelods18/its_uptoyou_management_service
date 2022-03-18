@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import it.itsuptoyou.collections.User;
+import it.itsuptoyou.exceptions.NotFoundException;
 import it.itsuptoyou.exceptions.ValidationFailedException;
 import it.itsuptoyou.service.UserService;
 import lombok.extern.log4j.Log4j2;
@@ -62,7 +63,7 @@ public class UserController {
 	 * @throws ClassNotFoundException 
 	 */
 	@PostMapping(value="/public/confirm-registration")
-	public ResponseEntity<?> confirmRegistration(@RequestBody Map<String,Object> confirmRegRequest) throws ValidationFailedException, ClassNotFoundException{
+	public ResponseEntity<?> confirmRegistration(@RequestBody Map<String,Object> confirmRegRequest) throws ValidationFailedException, NotFoundException{
 		Map<String,Object> registeredUser = userService.secondStepRegistration(confirmRegRequest);
 		return ResponseEntity.ok(registeredUser);
 	}
@@ -77,7 +78,7 @@ public class UserController {
 	 * @throws ConcurrentModificationException
 	 */
 	@PatchMapping(value="/protected/update-profile")
-	public ResponseEntity<?> updateProfile(@RequestBody Map<String,Object> updateProfileRequest) throws NumberFormatException, ClassNotFoundException, ConcurrentModificationException{
+	public ResponseEntity<?> updateProfile(@RequestBody Map<String,Object> updateProfileRequest) throws NumberFormatException, NotFoundException, ConcurrentModificationException{
 		Map<String,Object> user = userService.updateUserProfile(updateProfileRequest);
 		return ResponseEntity.ok(user);
 	}
@@ -89,14 +90,21 @@ public class UserController {
 	 * @throws ClassNotFoundException
 	 */
 	@GetMapping(value="/protected/profile")
-	public ResponseEntity<?> getProfile(HttpServletRequest request) throws ClassNotFoundException{
+	public ResponseEntity<?> getProfile(HttpServletRequest request) throws NotFoundException{
 		log.info(request.getHeader("username"));
 		User u = userService.getProfile(request.getHeader("username"));
 		return ResponseEntity.ok(u);
 	}
 	
+	/**
+	 * 
+	 * @param request
+	 * @param userId
+	 * @return profile of other person by userId
+	 * @throws NotFoundException
+	 */
 	@GetMapping(value="/protected/profile/{userId}")
-	public ResponseEntity<?> getProfileOfUser(HttpServletRequest request, @PathVariable("userId") String userId) throws ClassNotFoundException{
+	public ResponseEntity<?> getProfileOfUser(HttpServletRequest request, @PathVariable("userId") String userId) throws NotFoundException{
 		log.info(request.getHeader("username"));
 		Map<String,Object> user = userService.getOtherprofile(Long.valueOf(userId));
 		return ResponseEntity.ok(user);
@@ -110,7 +118,7 @@ public class UserController {
 	 * @throws NoSuchAlgorithmException
 	 */
 	@PostMapping(value="/public/password-forgot")
-	public ResponseEntity<?> passwordForget(@RequestBody Map<String,Object> request) throws ClassNotFoundException, NoSuchAlgorithmException{
+	public ResponseEntity<?> passwordForget(@RequestBody Map<String,Object> request) throws NotFoundException, NoSuchAlgorithmException{
 		if(userService.passwordRecovery(request)) {
 			return ResponseEntity.ok("Procedura recupero password avviata");
 		}else {
@@ -126,7 +134,7 @@ public class UserController {
 	 * @throws ValidationFailedException
 	 */
 	@PostMapping(value="/public/change-password")
-	public ResponseEntity<?> changePassword(@RequestBody Map<String,Object> request) throws ClassNotFoundException, ValidationFailedException{
+	public ResponseEntity<?> changePassword(@RequestBody Map<String,Object> request) throws NotFoundException, ValidationFailedException{
 		if(userService.changePassword(request,false)) {
 			return ResponseEntity.ok("Cambio password avvenuto con successo");
 		}else {
@@ -144,7 +152,7 @@ public class UserController {
 	 * @throws ValidationFailedException
 	 */
 	@PostMapping(value="/protected/change-password")
-	public ResponseEntity<?> changePasswordLogged(@RequestBody Map<String,Object> request) throws ClassNotFoundException, ValidationFailedException{
+	public ResponseEntity<?> changePasswordLogged(@RequestBody Map<String,Object> request) throws NotFoundException, ValidationFailedException{
 		if(userService.changePassword(request,true)) {
 			return ResponseEntity.ok("Cambio password avvenuto con successo");
 		}else {
