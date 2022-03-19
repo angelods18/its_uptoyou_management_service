@@ -15,4 +15,6 @@ public interface SocialService {
 	Map<String, Object> getPendingInvitation(String username) throws NotFoundException;
 	
 	Map<String, Object> getFriendList(String username) throws NotFoundException;
+	
+	Map<String, Object> createTeam(String username, Map<String,Object> request) throws NotFoundException;
 }

@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,12 +24,18 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import it.itsuptoyou.collections.Friendship;
 import it.itsuptoyou.collections.InvitationCode;
+import it.itsuptoyou.collections.Team;
+import it.itsuptoyou.collections.Team.Member;
+import it.itsuptoyou.collections.Team.TeamRole;
+import it.itsuptoyou.collections.Team.TeamStatus;
 import it.itsuptoyou.collections.User;
 import it.itsuptoyou.collections.Friendship.FriendshipStatus;
+import it.itsuptoyou.dal.SocialDal;
 import it.itsuptoyou.exceptions.NotFoundException;
 import it.itsuptoyou.models.FriendshipInfoPerUser;
 import it.itsuptoyou.repositories.FriendsRepository;
 import it.itsuptoyou.repositories.InvitationRepository;
+import it.itsuptoyou.repositories.TeamRepository;
 import it.itsuptoyou.repositories.UserRepository;
 import it.itsuptoyou.service.CustomSequenceService;
 import it.itsuptoyou.service.SocialService;
@@ -47,10 +54,19 @@ public class SocialServiceImpl implements SocialService{
 	private FriendsRepository friendsRepository;
 	
 	@Autowired
+	private TeamRepository teamRepository;
+	
+	@Autowired
 	private SecureCodeUtils secureCodeUtils;
 	
 	@Autowired
 	private MongoTemplate mongoTemplate;
+	
+	@Autowired
+	private SocialDal socialDal;
+	
+	@Autowired
+	private CustomSequenceService customSequenceService;
 	
 	private ObjectMapper getMapper() {
 		ObjectMapper mapper = new ObjectMapper();
@@ -134,19 +150,8 @@ public class SocialServiceImpl implements SocialService{
 	public Map<String, Object> getPendingInvitation(String username) throws NotFoundException {
 		// TODO Auto-generated method stub
 		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
-		List<Friendship> pendingInvitation = friendsRepository.findByUserAOrUserBAndStatus(user.getUserId(), user.getUserId(), FriendshipStatus.PENDING.name());
-		List<Friendship> sendByMeInvitation = new ArrayList<>();
-		List<Friendship> sendToMeInvitation = new ArrayList<>();
-		pendingInvitation.parallelStream().forEach((pi) -> {
-			if(pi.getUserA()==user.getUserId()) {
-				sendByMeInvitation.add(pi);
-			}else {
-				sendToMeInvitation.add(pi);
-			}
-		});
-		Map<String,Object> resp = new HashMap<>();
-		resp.put("sendByMeInvitation", sendByMeInvitation);
-		resp.put("sendToMeInvitation", sendToMeInvitation);
+
+		Map<String,Object> resp = socialDal.getPendingInvitationUser(user);
 		return resp;
 	}
 	
@@ -154,21 +159,44 @@ public class SocialServiceImpl implements SocialService{
 	public Map<String, Object> getFriendList(String username) throws NotFoundException {
 		// TODO Auto-generated method stub
 		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
-		LookupOperation lookupOperation = LookupOperation.newLookup()
-				.from(mongoTemplate.getCollectionName(User.class)).localField("userB")
-				.foreignField("userId").as("userB");
-		Aggregation aggregation = Aggregation.newAggregation(
-				Aggregation.match(Criteria.where("userA").is(user.getUserId()).and("status").is(FriendshipStatus.ACCEPTED.name())),
-				lookupOperation);
-		List<FriendshipInfoPerUser> friendList = mongoTemplate.aggregate(aggregation, mongoTemplate.getCollectionName(Friendship.class),
-				FriendshipInfoPerUser.class).getMappedResults();
-		List<User> friends = new ArrayList<>();
-		friendList.parallelStream().forEach((fl) ->{
-			friends.add(fl.removePrivateInfoFromUserB());
-		});
+		List<User> friends = socialDal.getFriendList(user);
 		//List<User> friends = friendList.removePrivateInfoFromUserB();
 		Map<String,Object> resp = new HashMap<>();
 		resp.put("friends", friends);
 		return resp;
+	}
+	
+	@Override
+	public Map<String, Object> createTeam(String username, Map<String, Object> request) throws NotFoundException {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
+		final Team t = new Team();
+		t.setMembers(new ArrayList<>());
+		t.setCreatorId(user.getUserId());
+		Member member = t.new Member();
+		member.setUserId(user.getUserId());
+		member.getRole().add(TeamRole.FOUNDER);
+		member.getRole().add(TeamRole.ADMIN);
+		member.setStatus(TeamStatus.ACCEPTED);
+		t.getMembers().add(member);
+		List<Integer> invited = getMapper().convertValue(request.get("invitedFriends"), List.class);
+		invited.parallelStream().forEach((i)-> {
+			Long id = Long.parseLong(i.toString());
+			if(userRepository.findByUserId(id).isPresent() &&
+				friendsRepository.findByUserAAndUserB(id, user.getUserId()).isPresent() &&
+				friendsRepository.findByUserAAndUserB(id, user.getUserId()).get().getStatus().equals(FriendshipStatus.ACCEPTED))
+			{				
+				Member m = t.new Member();
+				m.getRole().add(TeamRole.BEGINNER);
+				m.setUserId(id);
+				t.getMembers().add(m);
+			}
+		});
+		t.setTeamName(request.get("teamName").toString());
+		t.setTeamId(customSequenceService.generateSequence("customSequences_team", "team"));
+		t.setCreatedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+		t.setLastModifiedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+		
+		return getMapper().convertValue(teamRepository.save(t), Map.class);
 	}
 }

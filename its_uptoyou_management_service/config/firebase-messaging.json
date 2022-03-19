@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "its-up-to-you---gaeta",
+  "private_key_id": "8bb7ce74a87a68f4a1cb8a5b9584f26a5764a49f",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC5o0FO2j0MPlis\nhF11O2eeH+pCJXR4n3YyHOmImSck2HOI8S5oP1nzXUa721GD1JjZHWlgZ3f9LqUy\nLtksZHywzvqdRz408QLc7TMEE/fViiGgFR9VCtZOy5n46wIHl9dNFyXIWIbmatnN\nBOLW/b+OnM/mlzlCgUcoFSaZtgUiKBe5DqNkmgUWZqWwaKLmVlNkEBvbygs0uiBN\nb+1A75l3bptNtMbjOopkITGVtH172Xl6kYyDpdKcjHzZqZKxO7SneVF4l1wMvZsV\n0lrWXfSCCdYCXGoYbseHMAmy8k5yKu6GpZfJ1xn7Bi7trMSpYD6VUcepqgr/6AEN\nyLaCjCYDAgMBAAECggEAECT8k9XMo8XzgrCesbvEdS7W+edPMjZcDY7dWIqvqgRE\nRM9rQ8tOqijQjM60HIz4UtmJLCzGqKqbDCEHtIhAt94oUyLt0nJ4PawU8oo+1L/T\n0M8SQukgXjxV9bbEHgW8k1de0Wx+WIeuZwz0iJ7YC/6wFG1oBqELn5bHUDlRe188\nIGedpacwpd5qP80hYypiYfsmXr8k3C3s3S3A7KNfuMCl9whwAwZKLfldnJiDLN9U\nQLGmKjhy0NPra20hdwJAblp8l1t/yQLbs05pOdaugO75TpqecEyxTU5PRZVgawTA\n1qQJRh4uAcHrxXmMc/g6kE1ujeshxlRzUBnnj3BgIQKBgQDexGHxk34eoCd0tOhs\nErnRRzCVQJKKD9z8mwKnxqazQb9akttYRdP3c4OyglO+IkpxcYF82V8zQAhryJi9\nyqkt4DNarRdYDioYdwsdoEQ6TWgdjEom2hzwYPFUsd5D9FOuuWS9gf/HYBXVkLPZ\nMCWQamN3dh7KgNcMfUPNQdoa6wKBgQDVVOCGUVBdrH4s6ZABxvSZRdIydRixMq4z\na/QoI6gMxwOpYRJ/540u39rw+6OXh0vAXgd4gO0WIeCQOYTRMYEI3LzSXdSaWS/I\nsunRa8meaUcyOA4xAKB/Cxj4WKJecpz9yQu/nKXkYrU+Wemm3UnEFJ375bXq25mR\ndNCHKz8rSQKBgQC4CMlZiB4DMxAljGcPEZFNYWCzjPsC8AQC9BSHgsepA8IQE47+\nKAHrRhUg3iZMx4t0mO7+s53Aez/5u2jkMo79hWEnoiPM7Ta9q2sVeJelCtnev01r\nN3n85Dm7XI5g2XJgwGyHWuRyU+D15GuQHASMgDfYM09QwIvol3vyEFsdLQKBgBxx\nfqYp/U8gCoqucXbrMf2lo4r6tdoaacONZzZa2rMpbcGNocvP8bEIQ8bRplQzw9PY\nNaLJfdLvnWNdZ+oEcbHezIY34Hrb3VUjFa3Ic09dthJqCupZrQyDTEcAelWhbnEf\n9yMLHcs/pe60SkTnSEiOfynwzLqNoQIV0x/Skk+RAoGABaKUhzl13pxT3ti44MDu\nLojv9CtpMXNv5VL8t4FezCcR1TSmCS0HzDV+XWYvF8gZjt7GfpMEpus13wSzpgEJ\nOJe7QM4yqfHBZoUjfk6mTZvhIgEESoKNf/tUCL/huqZn1YVEhlZmJDMYa/xS8sUn\nXkRplyrpvRQOiN33FZScyDc=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-taefu@its-up-to-you---gaeta.iam.gserviceaccount.com",
+  "client_id": "107645776731170018322",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-taefu%40its-up-to-you---gaeta.iam.gserviceaccount.com"
+}

@@ -80,9 +80,28 @@ public class SocialController {
 		return ResponseEntity.ok(resp);
 	}
 	
+	/**
+	 * get the list of all your confirmed friends
+	 * @param request
+	 * @return
+	 * @throws NotFoundException
+	 */
 	@GetMapping(value="/protected/friends")
 	public ResponseEntity<?> getFriendList(HttpServletRequest request) throws NotFoundException{
 		Map<String,Object> resp = socialService.getFriendList(request.getHeader("username"));
+		return ResponseEntity.ok(resp);
+	}
+	
+	/**
+	 * create a team of which you are the founder
+	 * @param request username from gateway header
+	 * @param requestBody teamname and starting user invitation
+	 * @return
+	 * @throws NotFoundException
+	 */
+	@PostMapping(value="/protected/create-team")
+	public ResponseEntity<?> createTeam(HttpServletRequest request, @RequestBody Map<String,Object> requestBody) throws NotFoundException {
+		Map<String,Object> resp = socialService.createTeam(request.getHeader("username"), requestBody);
 		return ResponseEntity.ok(resp);
 	}
 }
