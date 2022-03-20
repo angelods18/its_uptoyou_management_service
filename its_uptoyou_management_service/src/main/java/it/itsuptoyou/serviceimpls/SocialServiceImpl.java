@@ -199,4 +199,23 @@ public class SocialServiceImpl implements SocialService{
 		
 		return getMapper().convertValue(teamRepository.save(t), Map.class);
 	}
+	
+	@Override
+	public Boolean answerTeamInvitationRequest(String username, Map<String,Object> request) throws NotFoundException {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
+		Team team = teamRepository.findByTeamId(Long.parseLong(request.get("teamId").toString())).orElseThrow(()->new NotFoundException("team"));
+		Member member = team.getMembers().stream().filter(m -> m.getUserId()==user.getUserId()).findFirst().orElseThrow(() -> new NotFoundException("invitation"));
+		int index = team.getMembers().indexOf(member);
+		if(request.get("answer").toString().equals(TeamStatus.ACCEPTED.name())) {
+			member.setStatus(TeamStatus.ACCEPTED);
+			team.getMembers().set(index, member);
+			teamRepository.save(team);
+			return true;
+		}else {
+			team.getMembers().remove(member);
+			teamRepository.save(team);
+			return false;
+		}
+	}
 }

@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -102,6 +103,31 @@ public class SocialController {
 	@PostMapping(value="/protected/create-team")
 	public ResponseEntity<?> createTeam(HttpServletRequest request, @RequestBody Map<String,Object> requestBody) throws NotFoundException {
 		Map<String,Object> resp = socialService.createTeam(request.getHeader("username"), requestBody);
+		return ResponseEntity.ok(resp);
+	}
+	
+	/**
+	 * ask the founder and the admin to be part of the team
+	 * @param request
+	 * @param requestBody
+	 * @return
+	 */
+	@PatchMapping(value="/protected/team-request")
+	public ResponseEntity<?> teamRequest(HttpServletRequest request, @RequestBody Map<String,Object> requestBody) {
+		//TODO when notify have been setup
+		return ResponseEntity.ok("TO BE DEFINED");
+	}
+	
+	/**
+	 * answer invitation in a team
+	 * @param request
+	 * @param requestBody
+	 * @return
+	 * @throws NotFoundException 
+	 */
+	@PatchMapping(value="/protected/answer-team-invitation")
+	public ResponseEntity<?> answerTeamInvitationRequest(HttpServletRequest request, @RequestBody Map<String,Object> requestBody) throws NotFoundException {
+		Boolean resp = socialService.answerTeamInvitationRequest(request.getHeader("username"), requestBody);
 		return ResponseEntity.ok(resp);
 	}
 }

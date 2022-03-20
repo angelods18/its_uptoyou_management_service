@@ -34,7 +34,7 @@ public class Team extends EntityAbstract{
 			joinDate = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
 			points = 0;
 			role= new ArrayList<>();
-			status=TeamStatus.PENGIND;
+			status=TeamStatus.PENDING;
 		}
 	}
 	
@@ -43,6 +43,6 @@ public class Team extends EntityAbstract{
 	}
 	
 	public enum TeamStatus{
-		PENGIND, ACCEPTED
+		PENDING, ACCEPTED
 	}
 }
