@@ -94,7 +94,7 @@ public class SocialController {
 	}
 	
 	/**
-	 * create a team of which you are the founder
+	 * create a team of which you are the founder -> invited friends go to pendingMembers
 	 * @param request username from gateway header
 	 * @param requestBody teamname and starting user invitation
 	 * @return
@@ -107,19 +107,21 @@ public class SocialController {
 	}
 	
 	/**
-	 * ask the founder and the admin to be part of the team
+	 * ask the founder and the admin to be part of the team -> added to pendingMembers
 	 * @param request
 	 * @param requestBody
 	 * @return
+	 * @throws NotFoundException 
 	 */
-	@PatchMapping(value="/protected/team-request")
-	public ResponseEntity<?> teamRequest(HttpServletRequest request, @RequestBody Map<String,Object> requestBody) {
+	@PatchMapping(value="/protected/team-join-request")
+	public ResponseEntity<?> teamRequest(HttpServletRequest request, @RequestBody Map<String,Object> requestBody) throws NotFoundException {
 		//TODO when notify have been setup
-		return ResponseEntity.ok("TO BE DEFINED");
+		Boolean resp = socialService.requestJoiningTeam(request.getHeader("username"), requestBody);
+		return ResponseEntity.ok(resp);
 	}
 	
 	/**
-	 * answer invitation in a team
+	 * answer invitation in a team -> if accepted from pendingMembers to members
 	 * @param request
 	 * @param requestBody
 	 * @return

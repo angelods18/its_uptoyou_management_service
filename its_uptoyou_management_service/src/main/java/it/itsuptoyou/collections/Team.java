@@ -21,6 +21,7 @@ public class Team extends EntityAbstract{
 	private String teamName;
 	private long creatorId;
 	private List<Member> members;
+	private List<Member> pendingMembers;
 	
 	@Data
 	public class Member{

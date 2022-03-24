@@ -40,8 +40,10 @@ import it.itsuptoyou.repositories.UserRepository;
 import it.itsuptoyou.service.CustomSequenceService;
 import it.itsuptoyou.service.SocialService;
 import it.itsuptoyou.utils.SecureCodeUtils;
+import lombok.extern.log4j.Log4j2;
 
 @Service
+@Log4j2
 public class SocialServiceImpl implements SocialService{
 	
 	@Autowired
@@ -172,6 +174,7 @@ public class SocialServiceImpl implements SocialService{
 		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
 		final Team t = new Team();
 		t.setMembers(new ArrayList<>());
+		t.setPendingMembers(new ArrayList<>());
 		t.setCreatorId(user.getUserId());
 		Member member = t.new Member();
 		member.setUserId(user.getUserId());
@@ -189,7 +192,7 @@ public class SocialServiceImpl implements SocialService{
 				Member m = t.new Member();
 				m.getRole().add(TeamRole.BEGINNER);
 				m.setUserId(id);
-				t.getMembers().add(m);
+				t.getPendingMembers().add(m);
 			}
 		});
 		t.setTeamName(request.get("teamName").toString());
@@ -197,7 +200,25 @@ public class SocialServiceImpl implements SocialService{
 		t.setCreatedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
 		t.setLastModifiedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
 		
+		//TODO notify to pending members
+		
 		return getMapper().convertValue(teamRepository.save(t), Map.class);
+	}
+	
+	@Override
+	public Boolean requestJoiningTeam(String username, Map<String, Object> request) throws NotFoundException {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
+		Team team = teamRepository.findByTeamId(Long.parseLong(request.get("teamId").toString())).orElseThrow(()->new NotFoundException("team"));
+		Member newMember = team.new Member();
+		newMember.getRole().add(TeamRole.BEGINNER);
+		newMember.setUserId(user.getUserId());
+		team.getPendingMembers().add(newMember);
+		team.setLastModifiedDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+		teamRepository.save(team);
+		
+		//TODO notify to admin and founder of the team for new request
+		return true;
 	}
 	
 	@Override
@@ -205,17 +226,24 @@ public class SocialServiceImpl implements SocialService{
 		// TODO Auto-generated method stub
 		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
 		Team team = teamRepository.findByTeamId(Long.parseLong(request.get("teamId").toString())).orElseThrow(()->new NotFoundException("team"));
-		Member member = team.getMembers().stream().filter(m -> m.getUserId()==user.getUserId()).findFirst().orElseThrow(() -> new NotFoundException("invitation"));
-		int index = team.getMembers().indexOf(member);
+		Member member = team.getPendingMembers().stream().filter(m -> m.getUserId()==user.getUserId()).findFirst().orElseThrow(() -> new NotFoundException("invitation"));
+		int index = team.getPendingMembers().indexOf(member);
+		if(index == -1) {
+			log.info("user doesn't exists in pending members");
+			return false;
+		}
 		if(request.get("answer").toString().equals(TeamStatus.ACCEPTED.name())) {
 			member.setStatus(TeamStatus.ACCEPTED);
-			team.getMembers().set(index, member);
+			team.getMembers().add(member);
+			team.getPendingMembers().remove(index);
 			teamRepository.save(team);
 			return true;
 		}else {
-			team.getMembers().remove(member);
+			team.getPendingMembers().remove(member);
 			teamRepository.save(team);
 			return false;
 		}
+		
+		//TODO notify to user that have joined the team
 	}
 }
