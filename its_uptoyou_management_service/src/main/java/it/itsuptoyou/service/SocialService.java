@@ -3,6 +3,7 @@ package it.itsuptoyou.service;
 import java.util.Map;
 
 import it.itsuptoyou.exceptions.NotFoundException;
+import it.itsuptoyou.exceptions.PreconditionFailedException;
 
 public interface SocialService {
 
@@ -21,4 +22,6 @@ public interface SocialService {
 	Boolean requestJoiningTeam(String username, Map<String,Object> request) throws NotFoundException;
 	
 	Boolean answerTeamInvitationRequest(String username, Map<String,Object> request) throws NotFoundException;
+	
+	Boolean answerTeamJoinRequest(String username, Map<String,Object> request) throws NotFoundException, PreconditionFailedException;
 }

@@ -32,6 +32,7 @@ import it.itsuptoyou.collections.User;
 import it.itsuptoyou.collections.Friendship.FriendshipStatus;
 import it.itsuptoyou.dal.SocialDal;
 import it.itsuptoyou.exceptions.NotFoundException;
+import it.itsuptoyou.exceptions.PreconditionFailedException;
 import it.itsuptoyou.models.FriendshipInfoPerUser;
 import it.itsuptoyou.repositories.FriendsRepository;
 import it.itsuptoyou.repositories.InvitationRepository;
@@ -192,7 +193,7 @@ public class SocialServiceImpl implements SocialService{
 				Member m = t.new Member();
 				m.getRole().add(TeamRole.BEGINNER);
 				m.setUserId(id);
-				t.getPendingMembers().add(m);
+				t.getMembers().add(m);
 			}
 		});
 		t.setTeamName(request.get("teamName").toString());
@@ -223,27 +224,59 @@ public class SocialServiceImpl implements SocialService{
 	
 	@Override
 	public Boolean answerTeamInvitationRequest(String username, Map<String,Object> request) throws NotFoundException {
-		// TODO Auto-generated method stub
+		// TODO answer of the user that has been invited
+		
 		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
 		Team team = teamRepository.findByTeamId(Long.parseLong(request.get("teamId").toString())).orElseThrow(()->new NotFoundException("team"));
-		Member member = team.getPendingMembers().stream().filter(m -> m.getUserId()==user.getUserId()).findFirst().orElseThrow(() -> new NotFoundException("invitation"));
-		int index = team.getPendingMembers().indexOf(member);
+		Member member = team.getMembers().stream().filter(m -> m.getUserId()==user.getUserId()).findFirst().orElseThrow(() -> new NotFoundException("invitation"));
+		int index = team.getMembers().indexOf(member);
 		if(index == -1) {
 			log.info("user doesn't exists in pending members");
 			return false;
 		}
 		if(request.get("answer").toString().equals(TeamStatus.ACCEPTED.name())) {
 			member.setStatus(TeamStatus.ACCEPTED);
-			team.getMembers().add(member);
-			team.getPendingMembers().remove(index);
+			member.setJoinDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+			team.getMembers().set(index,member);
 			teamRepository.save(team);
 			return true;
 		}else {
-			team.getPendingMembers().remove(member);
+			team.getMembers().remove(member);
 			teamRepository.save(team);
 			return false;
 		}
 		
 		//TODO notify to user that have joined the team
 	}
+	
+	@Override
+	public Boolean answerTeamJoinRequest(String username, Map<String, Object> request) throws NotFoundException, PreconditionFailedException {
+		// TODO answer of ADMIN or FOUNDER to those users that want to join the team
+		
+		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
+		Team team = teamRepository.findByTeamId(Long.parseLong(request.get("teamId").toString())).orElseThrow(()->new NotFoundException("team"));
+		//check if the user that accept is or a FOUNDER or a ADMIN
+		Member adminMember = team.getMembers().stream().filter(m -> (m.getUserId()==user.getUserId() && 
+				(m.getRole().contains(TeamRole.ADMIN) || m.getRole().contains(TeamRole.FOUNDER))))
+				.findFirst().orElseThrow(() -> new PreconditionFailedException("team","adminOrFounderNotFound"));
+		Member member = team.getPendingMembers().stream().filter(m -> (m.getUserId()==Long.parseLong(request.get("userId").toString())))
+				.findFirst().orElseThrow(() -> new NotFoundException("invitation"));
+		int index = team.getPendingMembers().indexOf(member);
+		if(request.get("answer").toString().equals(TeamStatus.ACCEPTED.name())) {
+			member.setStatus(TeamStatus.ACCEPTED);
+			member.setJoinDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
+			team.getMembers().add(member);
+			team.getPendingMembers().remove(index);
+			teamRepository.save(team);
+			return true;
+		}else {
+			team.getPendingMembers().remove(index);
+			teamRepository.save(team);
+			return false;
+		}
+		
+		//TODO notify to user waiting for admin response
+	}
+	
+	
 }

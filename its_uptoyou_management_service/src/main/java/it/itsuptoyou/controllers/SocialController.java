@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import it.itsuptoyou.exceptions.NotFoundException;
+import it.itsuptoyou.exceptions.PreconditionFailedException;
 import it.itsuptoyou.service.SocialService;
 import it.itsuptoyou.service.UserService;
 import lombok.extern.log4j.Log4j2;
@@ -132,4 +133,12 @@ public class SocialController {
 		Boolean resp = socialService.answerTeamInvitationRequest(request.getHeader("username"), requestBody);
 		return ResponseEntity.ok(resp);
 	}
+	
+	@PatchMapping(value="/protected/answer-team-join-request")
+	public ResponseEntity<?> answerTeamJoinRequest(HttpServletRequest request, @RequestBody Map<String,Object> requestBody) throws NotFoundException, PreconditionFailedException {
+		Boolean resp = socialService.answerTeamJoinRequest(request.getHeader("username"), requestBody);
+		return ResponseEntity.ok(resp);
+	}
+	
+	
 }
