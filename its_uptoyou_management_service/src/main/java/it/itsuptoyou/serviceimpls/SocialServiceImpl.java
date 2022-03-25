@@ -211,6 +211,10 @@ public class SocialServiceImpl implements SocialService{
 	public Boolean requestJoiningTeam(String username, Map<String, Object> request) throws NotFoundException {
 		// TODO Auto-generated method stub
 		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
+		if(socialDal.isUserAlreadyInTeam(user)) {
+			return false;
+		}
+		
 		Team team = teamRepository.findByTeamId(Long.parseLong(request.get("teamId").toString())).orElseThrow(()->new NotFoundException("team"));
 		Member newMember = team.new Member();
 		newMember.getRole().add(TeamRole.BEGINNER);
@@ -322,6 +326,11 @@ public class SocialServiceImpl implements SocialService{
 					.findFirst();
 			if(member.isPresent()) {
 				int index = team.getMembers().indexOf(member.get());
+				if(member.get().getRole().contains(TeamRole.ADMIN) || member.get().getRole().contains(TeamRole.FOUNDER)) {
+					if(!adminMember.getRole().contains(TeamRole.FOUNDER)) {
+						throw new PreconditionFailedException("team", "you must be a FOUNDER");
+					}
+				}
 				team.getPendingMembers().remove(index);
 			}
 		}

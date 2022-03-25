@@ -8,11 +8,13 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 import org.springframework.data.mongodb.core.aggregation.LookupOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Repository;
 
 import it.itsuptoyou.collections.Friendship;
+import it.itsuptoyou.collections.Team;
 import it.itsuptoyou.collections.User;
 import it.itsuptoyou.collections.Friendship.FriendshipStatus;
 import it.itsuptoyou.models.FriendshipInfoPerUser;
@@ -75,5 +77,16 @@ public class SocialDal {
 			friends.add(fl.removePrivateInfoFromUserB());
 		});
 		return friends;
+	}
+	
+	public Boolean isUserAlreadyInTeam(User user) {
+		Criteria criteria = new Criteria().orOperator( 
+				new Criteria().and("members").elemMatch(new Criteria("userId").is(user.getUserId())),
+				new Criteria().and("pendingMembers").elemMatch(new Criteria("userId").is(user.getUserId())));
+		AggregationOperation match = Aggregation.match(criteria);
+		Aggregation aggregation = Aggregation.newAggregation(match);
+		List<Team> t = mongoTemplate.aggregate(aggregation, "teams", Team.class).getMappedResults();
+		
+		return (t.size()>0);
 	}
 }
