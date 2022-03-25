@@ -9,8 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import it.itsuptoyou.exceptions.NotFoundException;
@@ -95,7 +97,7 @@ public class SocialController {
 	}
 	
 	/**
-	 * create a team of which you are the founder -> invited friends go to pendingMembers
+	 * create a team of which you are the founder -> invited friends go to members status PENDING
 	 * @param request username from gateway header
 	 * @param requestBody teamname and starting user invitation
 	 * @return
@@ -122,7 +124,7 @@ public class SocialController {
 	}
 	
 	/**
-	 * answer invitation in a team -> if accepted from pendingMembers to members
+	 * answer invitation in a team -> members with status PENDING -> ACCEPTED
 	 * @param request
 	 * @param requestBody
 	 * @return
@@ -134,9 +136,39 @@ public class SocialController {
 		return ResponseEntity.ok(resp);
 	}
 	
+	/**
+	 * answer users request to join a team -> pendingMembers PENDING -> members ACCEPTED
+	 * only FOUNDER or ADMIN can answer
+	 * @param request
+	 * @param requestBody
+	 * @return
+	 * @throws NotFoundException
+	 * @throws PreconditionFailedException
+	 */
 	@PatchMapping(value="/protected/answer-team-join-request")
 	public ResponseEntity<?> answerTeamJoinRequest(HttpServletRequest request, @RequestBody Map<String,Object> requestBody) throws NotFoundException, PreconditionFailedException {
 		Boolean resp = socialService.answerTeamJoinRequest(request.getHeader("username"), requestBody);
+		return ResponseEntity.ok(resp);
+	}
+	
+	/**
+	 * get team information:
+	 *  if admin or founder -> all members
+	 *  if not -> only member in status accepted
+	 * @param request
+	 * @param teamId
+	 * @return
+	 * @throws NotFoundException
+	 */
+	@GetMapping(value="/protected/team/{teamId}")
+	public ResponseEntity<?> getTeamByTeamId(HttpServletRequest request, @PathVariable("teamId") long teamId) throws NotFoundException{
+		Map<String,Object> resp = socialService.getTeamById(request.getHeader("username"), teamId);
+		return ResponseEntity.ok(resp);
+	}
+	
+	@PatchMapping(value="/protected/remove-member")
+	public ResponseEntity<?> removeMemberOfTeam(HttpServletRequest request, @RequestBody Map<String,Object> requestBody) throws NotFoundException, PreconditionFailedException {
+		Boolean resp = socialService.removeFromTeam(request.getHeader("username"), requestBody);
 		return ResponseEntity.ok(resp);
 	}
 	

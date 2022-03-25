@@ -24,4 +24,8 @@ public interface SocialService {
 	Boolean answerTeamInvitationRequest(String username, Map<String,Object> request) throws NotFoundException;
 	
 	Boolean answerTeamJoinRequest(String username, Map<String,Object> request) throws NotFoundException, PreconditionFailedException;
+	
+	Map<String, Object> getTeamById(String username, long id) throws NotFoundException;
+	
+	Boolean removeFromTeam(String username, Map<String,Object> request) throws NotFoundException, PreconditionFailedException;
 }

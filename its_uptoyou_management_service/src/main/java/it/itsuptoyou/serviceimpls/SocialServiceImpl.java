@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -276,6 +277,58 @@ public class SocialServiceImpl implements SocialService{
 		}
 		
 		//TODO notify to user waiting for admin response
+	}
+	
+	@Override
+	public Map<String, Object> getTeamById(String username, long id) throws NotFoundException {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
+		Team team = teamRepository.findByTeamId(id).orElseThrow(()->new NotFoundException("team"));
+		Optional<Member> adminMember = team.getMembers().stream()
+				.filter(m -> (m.getUserId()==user.getUserId() && 
+				(m.getRole().contains(TeamRole.ADMIN) || m.getRole().contains(TeamRole.FOUNDER))))
+				.findFirst();
+		if(adminMember.isPresent()) {
+			return getMapper().convertValue(team, Map.class);
+		}else {
+			team=removePendingMembers(team);	
+			return getMapper().convertValue(team, Map.class);
+		}
+		
+	}
+	
+	private Team removePendingMembers(Team team) {
+		team.getMembers().removeIf((m) -> !m.getStatus().equals(TeamStatus.ACCEPTED));
+		team.getPendingMembers().removeIf((m) -> !m.getStatus().equals(TeamStatus.ACCEPTED));
+		return team;
+	}
+	
+	@Override
+	public Boolean removeFromTeam(String username, Map<String, Object> request)
+			throws NotFoundException, PreconditionFailedException {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
+		Team team = teamRepository.findByTeamId(Long.parseLong(request.get("teamId").toString())).orElseThrow(()->new NotFoundException("team"));
+		Member adminMember = team.getMembers().stream().filter(m -> (m.getUserId()==user.getUserId() && 
+				(m.getRole().contains(TeamRole.ADMIN) || m.getRole().contains(TeamRole.FOUNDER))))
+				.findFirst().orElseThrow(() -> new PreconditionFailedException("team","adminOrFounderNotFound"));
+		Optional<Member> member = team.getPendingMembers().stream().filter(m -> (m.getUserId()==Long.parseLong(request.get("userId").toString())))
+				.findFirst();
+		if(member.isPresent()) {
+			int index = team.getPendingMembers().indexOf(member.get());
+			team.getPendingMembers().remove(index);
+		}else {
+			member = team.getMembers().stream().filter(m -> (m.getUserId()==Long.parseLong(request.get("userId").toString())))
+					.findFirst();
+			if(member.isPresent()) {
+				int index = team.getMembers().indexOf(member.get());
+				team.getPendingMembers().remove(index);
+			}
+		}
+		//TODO notify to the user that has been removed from the team
+		
+		teamRepository.save(team);
+		return true;
 	}
 	
 	
