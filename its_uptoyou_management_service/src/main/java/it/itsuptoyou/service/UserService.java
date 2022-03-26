@@ -26,4 +26,5 @@ public interface UserService {
 
 	Boolean changePassword(Map<String, Object> changePasswordRequest, Boolean isLogged) throws NotFoundException, ValidationFailedException;
 	
+	Boolean sentToSupport(String username, Map<String,Object> request) throws NotFoundException;
 }

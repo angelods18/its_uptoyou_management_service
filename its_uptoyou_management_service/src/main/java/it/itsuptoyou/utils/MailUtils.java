@@ -63,4 +63,20 @@ public class MailUtils {
 			System.out.println("Errore: " + e);
 		}
 	}
+	
+	public void sendMessageToSupport(String fromEmail, String subject, String message) throws MessagingException {
+		JavaMailSender mailSender = getJavaMailSender();
+		MimeMessage mimeMessage = mailSender.createMimeMessage();
+		MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+		String msg ="From user <h3> " + fromEmail + "</h3> " + message;
+		helper.setFrom(username);
+		helper.setTo(username);
+		helper.setSubject(subject);
+		helper.setText(msg, true);
+		try {
+			mailSender.send(mimeMessage);
+		}catch(Exception e) {
+			System.out.println("Errore: " + e);
+		}
+	}
 }

@@ -159,4 +159,20 @@ public class UserController {
 			return ResponseEntity.badRequest().build();
 		}
 	}
+	
+	/**
+	 * send an email to the admin
+	 * @param request: username from gateway
+	 * @param requestBody: info about the support request: Title - Subject - Body
+	 * @return
+	 * @throws NotFoundException 
+	 */
+	@PostMapping(value="/protected/contact-support")
+	public ResponseEntity<?> contactSupport(HttpServletRequest request, @RequestBody Map<String,Object> requestBody) throws NotFoundException {
+		if(userService.sentToSupport(request.getHeader("username"),requestBody)) {
+			return ResponseEntity.ok("Email inviata con successo");
+		}else {
+			return ResponseEntity.badRequest().build();
+		}
+	}
 }

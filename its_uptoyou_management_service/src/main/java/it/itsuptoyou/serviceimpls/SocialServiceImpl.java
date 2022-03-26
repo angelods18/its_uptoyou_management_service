@@ -187,7 +187,8 @@ public class SocialServiceImpl implements SocialService{
 		List<Integer> invited = getMapper().convertValue(request.get("invitedFriends"), List.class);
 		invited.parallelStream().forEach((i)-> {
 			Long id = Long.parseLong(i.toString());
-			if(userRepository.findByUserId(id).isPresent() &&
+			Optional<User> us = userRepository.findByUserId(id);
+			if( us.isPresent() && !socialDal.isUserAlreadyInTeam(us.get()) &&
 				friendsRepository.findByUserAAndUserB(id, user.getUserId()).isPresent() &&
 				friendsRepository.findByUserAAndUserB(id, user.getUserId()).get().getStatus().equals(FriendshipStatus.ACCEPTED))
 			{				

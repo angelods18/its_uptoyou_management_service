@@ -313,4 +313,18 @@ public class UserServiceImpl implements UserService{
 		friendsRepository.save(friendshipBtoA);
 		return friendsRepository.save(friendshipAtoB);
 	}
+	
+	@Override
+	public Boolean sentToSupport(String username, Map<String, Object> request) throws NotFoundException {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByUsername(username).orElseThrow(()->new NotFoundException("user"));
+		try {
+			emailSender.sendMessageToSupport(user.getEmail(), request.get("subject").toString(), request.get("message").toString());
+			return true;
+		} catch (MessagingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+	}
 }
