@@ -96,6 +96,12 @@ public class UserController {
 		return ResponseEntity.ok(u);
 	}
 	
+	@GetMapping(value="/protected/profile/image")
+	public ResponseEntity<?> getProfileImage(HttpServletRequest request) {
+		String urlImageProfile= userService.getProfileImage(request.getHeader("username"));
+		return ResponseEntity.ok(urlImageProfile);
+	}
+	
 	/**
 	 * 
 	 * @param request

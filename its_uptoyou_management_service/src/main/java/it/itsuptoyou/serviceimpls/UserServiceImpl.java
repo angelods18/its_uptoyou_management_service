@@ -6,8 +6,10 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import io.imagekit.sdk.ImageKit;
 import it.itsuptoyou.collections.Authority;
 import it.itsuptoyou.collections.Friendship;
 import it.itsuptoyou.collections.InvitationCode;
@@ -87,6 +90,10 @@ public class UserServiceImpl implements UserService{
 	
 	@Value(value="${registration.first.step.part3}")
 	private String registrationFirstStepPart3;
+	
+	@Value(value="${UrlEndpoint}")
+	private String imageUrlEndpoint;
+	
 	
 	@Override
 	public Map<String, Object> firstStepRegistration(Map<String, Object> registrationRequest) throws NoSuchAlgorithmException, IllegalArgumentException, ValidationFailedException {
@@ -211,6 +218,18 @@ public class UserServiceImpl implements UserService{
 		// TODO Auto-generated method stub
 		User user = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("user"));
 		return user;
+	}
+	
+	@Override
+	public String getProfileImage(String username) {
+		// TODO Auto-generated method stub
+		Map<String, Object> options = new HashMap<>();
+		List<Map<String, String>> transformation=new ArrayList<Map<String, String>>();
+		Map<String, String> scale=new HashMap<>();
+		transformation.add(scale);
+		options.put("src", imageUrlEndpoint+"/It_s_up_to_you/logo_0ANEqZdlo.jpg");
+		options.put("transformation", transformation);
+		return ImageKit.getInstance().getUrl(options);
 	}
 	
 	@Override
