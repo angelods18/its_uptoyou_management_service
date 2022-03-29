@@ -12,8 +12,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import it.itsuptoyou.collections.User;
 import it.itsuptoyou.exceptions.NotFoundException;
@@ -72,6 +75,29 @@ public class UserController {
 	/**
 	 * update user profile 
 	 * @param updateProfileRequest 
+	 * {
+		    "userId":5,
+		    "version":0,
+		    "profile":{
+		        "name":"Angelo",
+		        "surname":"De Santis",
+		        "birthdate": "1995-05-18",
+		        "address":{
+		            "formattedAddress":"Viale America, 24, Gaeta, 04024, LT, Lazio, Italia",
+		            "city":"Gaeta",
+		            "geoPoint":{
+		                "type": "Point",
+		                "coordinates":[
+		                    13.13,
+		                    41.15
+		                ]
+		            }
+		        },
+		        "gender":"M",
+		        "school":"",
+		        "job":"software developer"
+		    }
+		}
 	 * @return user with updated profile
 	 * @throws NumberFormatException
 	 * @throws ClassNotFoundException
@@ -81,6 +107,12 @@ public class UserController {
 	public ResponseEntity<?> updateProfile(@RequestBody Map<String,Object> updateProfileRequest) throws NumberFormatException, NotFoundException, ConcurrentModificationException{
 		Map<String,Object> user = userService.updateUserProfile(updateProfileRequest);
 		return ResponseEntity.ok(user);
+	}
+	
+	@PutMapping(value="/protected/profile/image")
+	public ResponseEntity<?> updateImageProfile(HttpServletRequest request ,@RequestPart MultipartFile image) throws NotFoundException{
+		Boolean resp = userService.updateProfileImage(request.getHeader("username"), image);
+		return ResponseEntity.ok(resp);
 	}
 	
 	/**
@@ -97,7 +129,7 @@ public class UserController {
 	}
 	
 	@GetMapping(value="/protected/profile/image")
-	public ResponseEntity<?> getProfileImage(HttpServletRequest request) {
+	public ResponseEntity<?> getProfileImage(HttpServletRequest request) throws NotFoundException {
 		String urlImageProfile= userService.getProfileImage(request.getHeader("username"));
 		return ResponseEntity.ok(urlImageProfile);
 	}

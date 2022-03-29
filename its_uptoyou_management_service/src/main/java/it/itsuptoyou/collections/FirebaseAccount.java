@@ -1,5 +1,7 @@
 package it.itsuptoyou.collections;
 
+import java.util.List;
+
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import it.itsuptoyou.utils.EntityAbstract;
@@ -11,5 +13,5 @@ public class FirebaseAccount extends EntityAbstract{
 
 	private long userId;
 	private String accessToken;
-	private String firebaseToken;
+	private List<String> firebaseToken;
 }

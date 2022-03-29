@@ -1,5 +1,6 @@
 package it.itsuptoyou.serviceimpls;
 
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -23,6 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -47,6 +49,7 @@ import it.itsuptoyou.repositories.UserOtpRepository;
 import it.itsuptoyou.repositories.UserRepository;
 import it.itsuptoyou.service.CustomSequenceService;
 import it.itsuptoyou.service.UserService;
+import it.itsuptoyou.utils.ImageUtils;
 import it.itsuptoyou.utils.MailUtils;
 import it.itsuptoyou.utils.SecureCodeUtils;
 import lombok.extern.log4j.Log4j2;
@@ -77,6 +80,9 @@ public class UserServiceImpl implements UserService{
 	private SecureCodeUtils secureCodeUtils;
 	
 	@Autowired
+	private ImageUtils imageUtils;
+	
+	@Autowired
 	PasswordEncoder passwordEncoder;
 	
 	@Autowired
@@ -90,10 +96,6 @@ public class UserServiceImpl implements UserService{
 	
 	@Value(value="${registration.first.step.part3}")
 	private String registrationFirstStepPart3;
-	
-	@Value(value="${UrlEndpoint}")
-	private String imageUrlEndpoint;
-	
 	
 	@Override
 	public Map<String, Object> firstStepRegistration(Map<String, Object> registrationRequest) throws NoSuchAlgorithmException, IllegalArgumentException, ValidationFailedException {
@@ -214,22 +216,33 @@ public class UserServiceImpl implements UserService{
 	}
 	
 	@Override
+	public Boolean updateProfileImage(String username, MultipartFile file) throws NotFoundException {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("user"));
+		try {
+			imageUtils.uploadImage(file, user);
+			return true;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			log.error("Error in uploading image" + e);
+			return false;
+		}
+	}
+	
+	@Override
 	public User getProfile(String username) throws NotFoundException {
 		// TODO Auto-generated method stub
 		User user = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("user"));
+		user.setPassword(null);
 		return user;
 	}
 	
 	@Override
-	public String getProfileImage(String username) {
+	public String getProfileImage(String username) throws NotFoundException {
 		// TODO Auto-generated method stub
-		Map<String, Object> options = new HashMap<>();
-		List<Map<String, String>> transformation=new ArrayList<Map<String, String>>();
-		Map<String, String> scale=new HashMap<>();
-		transformation.add(scale);
-		options.put("src", imageUrlEndpoint+"/It_s_up_to_you/logo_0ANEqZdlo.jpg");
-		options.put("transformation", transformation);
-		return ImageKit.getInstance().getUrl(options);
+		User user = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("user"));
+		
+		return imageUtils.getImage(user);
 	}
 	
 	@Override

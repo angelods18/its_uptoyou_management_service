@@ -25,12 +25,11 @@ public class MessagingConfiguration {
 				.builder()
 				.setCredentials(googleCredentials)
 				.build();
-		try {
+		if(FirebaseApp.getApps().isEmpty()){
 			FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "its-app-to-you-gaeta");
 			return FirebaseMessaging.getInstance(app);
-		}catch(Exception e) {
-			return null;
 		}
+		return FirebaseMessaging.getInstance(FirebaseApp.getApps().get(0));
 		
 	}
 }
