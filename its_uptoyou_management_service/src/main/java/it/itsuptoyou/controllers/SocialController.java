@@ -49,7 +49,7 @@ public class SocialController {
 	/**
 	 * invite a user to be your friend
 	 * @param request from gateway with header username
-	 * @param requestBody the user that you want to invite
+	 * @param requestBody the user that you want to invite by username
 	 * @return friendship invitation pending
 	 * @throws NotFoundException
 	 */
@@ -62,7 +62,11 @@ public class SocialController {
 	/**
 	 * answer a friend invitation ACCEPTED or REFUSED
 	 * @param request
-	 * @param requestBody username and answer ACCEPTED or REFUSED
+	 * @param requestBody userId and answer ACCEPTED or REFUSED
+		{
+		    "user":1,
+		    "answer":"ACCEPTED"
+		}
 	 * @return
 	 * @throws NotFoundException
 	 */
@@ -73,7 +77,7 @@ public class SocialController {
 	}
 	
 	/**
-	 * get the list of pending invitation both to me and by me
+	 * get the list of pending invitation both to me and made by me
 	 * @param request from gateway with header username
 	 * @return list of pendingToMe and pendingByMe
 	 * @throws NotFoundException
@@ -98,8 +102,19 @@ public class SocialController {
 	
 	/**
 	 * create a team of which you are the founder -> invited friends go to members status PENDING
+	 * 
+	 * Rif: Creazione Team
+	 *  RF_ID 19
+	 *  SF_19_1
+	 * 
 	 * @param request username from gateway header
 	 * @param requestBody teamname and starting user invitation
+	 * {
+	 *   	"teamName":"TeamDesa",
+		    "invitedFriends":[
+		        5
+		    ]
+	 * }
 	 * @return
 	 * @throws NotFoundException
 	 */
@@ -111,8 +126,17 @@ public class SocialController {
 	
 	/**
 	 * ask the founder and the admin to be part of the team -> added to pendingMembers
+	 * notify both
+	 * 
+	 * Rif: Gestione Team_Richiesta di unirsi al team
+	 *  RF_ID 20 
+	 *  SF_20_2
+	 * 
 	 * @param request
 	 * @param requestBody
+	 *  {
+		    "teamId": 2
+		}
 	 * @return
 	 * @throws NotFoundException 
 	 */
@@ -125,8 +149,17 @@ public class SocialController {
 	
 	/**
 	 * answer invitation in a team -> members with status PENDING -> ACCEPTED
+	 * 
+	 * Rif: Gestione Team_Accettare un invito
+	 *  RF_ID 20
+	 *  SF_20_1
 	 * @param request
 	 * @param requestBody
+	 * 
+	 	{
+		    "teamId": 2,
+		    "answer": "ACCEPTED"
+		}
 	 * @return
 	 * @throws NotFoundException 
 	 */
@@ -139,8 +172,17 @@ public class SocialController {
 	/**
 	 * answer users request to join a team -> pendingMembers PENDING -> members ACCEPTED
 	 * only FOUNDER or ADMIN can answer
+	 * 
+	 * Rif: Gestione Team_Accettare una richiesta
+	 *  RF_ID 20
+	 *  SF_20_3
 	 * @param request
 	 * @param requestBody
+		{
+		    "teamId": 2,
+		    "userId": 5,
+		    "answer": "ACCEPTED"
+		}
 	 * @return
 	 * @throws NotFoundException
 	 * @throws PreconditionFailedException
@@ -166,6 +208,25 @@ public class SocialController {
 		return ResponseEntity.ok(resp);
 	}
 	
+	/**
+	 * remove a member of the team. Only ADMIN or FOUNDER can do this
+	 * Only FOUNDER can remove other ADMIN
+	 * Only FOUNDER can remove other FOUNDER
+	 * 
+	 * Rif: Gestione Team_Eliminare un membro
+	 *  RF_20
+	 *  SF_20_4
+	 *  
+	 * @param request
+	 * @param requestBody 
+	 * {
+	 *   "teamId": int,
+	 *   "userId": int
+	 * }
+	 * @return
+	 * @throws NotFoundException
+	 * @throws PreconditionFailedException
+	 */
 	@PatchMapping(value="/protected/remove-member")
 	public ResponseEntity<?> removeMemberOfTeam(HttpServletRequest request, @RequestBody Map<String,Object> requestBody) throws NotFoundException, PreconditionFailedException {
 		Boolean resp = socialService.removeFromTeam(request.getHeader("username"), requestBody);
