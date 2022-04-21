@@ -225,6 +225,7 @@ public class SocialServiceImpl implements SocialService{
 		teamRepository.save(team);
 		
 		//TODO notify to admin and founder of the team for new request
+		
 		return true;
 	}
 	
@@ -245,14 +246,16 @@ public class SocialServiceImpl implements SocialService{
 			member.setJoinDate(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
 			team.getMembers().set(index,member);
 			teamRepository.save(team);
+			//TODO notify to user that have joined the team
 			return true;
 		}else {
 			team.getMembers().remove(member);
 			teamRepository.save(team);
+			//TODO notify to user that have refused to join the team
 			return false;
 		}
 		
-		//TODO notify to user that have joined the team
+		
 	}
 	
 	@Override
@@ -294,14 +297,17 @@ public class SocialServiceImpl implements SocialService{
 				(m.getRole().contains(TeamRole.ADMIN) || m.getRole().contains(TeamRole.FOUNDER))))
 				.findFirst();
 		if(adminMember.isPresent()) {
+			// admin and founder can see both members and pending members
 			return getMapper().convertValue(team, Map.class);
 		}else {
+			// other users can see only members
 			team=removePendingMembers(team);	
 			return getMapper().convertValue(team, Map.class);
 		}
 		
 	}
 	
+	//remove from team (without saving) pendingmembers
 	private Team removePendingMembers(Team team) {
 		team.getMembers().removeIf((m) -> !m.getStatus().equals(TeamStatus.ACCEPTED));
 		team.getPendingMembers().removeIf((m) -> !m.getStatus().equals(TeamStatus.ACCEPTED));
@@ -320,12 +326,14 @@ public class SocialServiceImpl implements SocialService{
 		Optional<Member> member = team.getPendingMembers().stream().filter(m -> (m.getUserId()==Long.parseLong(request.get("userId").toString())))
 				.findFirst();
 		if(member.isPresent()) {
+			//PENDING MEMBERS REMOVE WITHOUT CHECK ROLE
 			int index = team.getPendingMembers().indexOf(member.get());
 			team.getPendingMembers().remove(index);
 		}else {
 			member = team.getMembers().stream().filter(m -> (m.getUserId()==Long.parseLong(request.get("userId").toString())))
 					.findFirst();
 			if(member.isPresent()) {
+				//MEMBERS ROLE NEED TO BE CHECKED
 				int index = team.getMembers().indexOf(member.get());
 				if(member.get().getRole().contains(TeamRole.ADMIN) || member.get().getRole().contains(TeamRole.FOUNDER)) {
 					if(!adminMember.getRole().contains(TeamRole.FOUNDER)) {
