@@ -32,7 +32,12 @@ public class SocialController {
 	private SocialService socialService;
 	
 	/**
+	 * Generate an invitation code to share with 
+	 * people not registered yet
 	 * 
+	 * Rif: Registrazione base con codice invito
+	 *  RF_ID 2
+	 *  SF_2_1 
 	 * 
 	 * @param request from gateway with header username
 	 * @param requestBody null
@@ -48,6 +53,11 @@ public class SocialController {
 	
 	/**
 	 * invite a user to be your friend
+	 * 
+	 * Rif: Invita un amico_profilo altrui
+	 *  RF_ID 11
+	 *  SF_11_2 
+	 *  
 	 * @param request from gateway with header username
 	 * @param requestBody the user that you want to invite by username
 	 * @return friendship invitation pending
@@ -61,6 +71,11 @@ public class SocialController {
 	
 	/**
 	 * answer a friend invitation ACCEPTED or REFUSED
+	 * 
+	 * Rif: Invita un amico_risposta
+	 *  RF_ID 11
+	 *  SF_11_3
+	 * 
 	 * @param request
 	 * @param requestBody userId and answer ACCEPTED or REFUSED
 		{

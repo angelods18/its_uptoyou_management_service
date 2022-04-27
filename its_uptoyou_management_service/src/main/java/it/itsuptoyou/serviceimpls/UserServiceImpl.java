@@ -40,8 +40,10 @@ import it.itsuptoyou.collections.User;
 import it.itsuptoyou.collections.UserOtp;
 import it.itsuptoyou.enums.AuthorityName;
 import it.itsuptoyou.exceptions.NotFoundException;
+import it.itsuptoyou.exceptions.PreconditionFailedException;
 import it.itsuptoyou.exceptions.ValidationFailedException;
 import it.itsuptoyou.models.Profile;
+import it.itsuptoyou.models.requests.RegistrationFirstStepRequest;
 import it.itsuptoyou.repositories.FriendsRepository;
 import it.itsuptoyou.repositories.InvitationRepository;
 import it.itsuptoyou.repositories.RegisteringUserRepository;
@@ -98,19 +100,19 @@ public class UserServiceImpl implements UserService{
 	private String registrationFirstStepPart3;
 	
 	@Override
-	public Map<String, Object> firstStepRegistration(Map<String, Object> registrationRequest) throws NoSuchAlgorithmException, IllegalArgumentException, ValidationFailedException {
+	public Map<String, Object> firstStepRegistration(RegistrationFirstStepRequest registrationRequest) throws NoSuchAlgorithmException, ValidationFailedException, PreconditionFailedException {
 		// TODO Auto-generated method stub
 		ObjectMapper mapper = new ObjectMapper();
 		String email="";
 		String username="";
 		String password="";
 		try {
-			email = registrationRequest.get("email").toString();
-			username = registrationRequest.get("username").toString();
-			password = registrationRequest.get("password").toString();
+			email = registrationRequest.getEmail();
+			username = registrationRequest.getUsername();
+			password = registrationRequest.getPassword();
 		}catch(NullPointerException e) {
 			log.error("null pointer " + e);
-			throw new ValidationFailedException("user","email, username and password cannot be null");
+			throw new ValidationFailedException("user","email and username and password cannot be null");
 		}
 		
 		//check if email or username already exist
@@ -118,7 +120,7 @@ public class UserServiceImpl implements UserService{
 		List<RegisteringUser> regUsers = registeringUserRepository.findByEmailOrUsername(email, username);
 		
 		if(users.size()>0 || regUsers.size()>0) {
-			throw new IllegalArgumentException("email or username already in use");
+			throw new PreconditionFailedException("user","email or username already in use");
 		}
 		
 		RegisteringUser newUser = new RegisteringUser();
@@ -129,8 +131,9 @@ public class UserServiceImpl implements UserService{
 		newUser.setPassword(passwordEncoder.encode(password));
 		
 		newUser.setSecureCode(secureCode);
-		if(registrationRequest.containsKey("invitationCode") && !registrationRequest.get("invitationCode").toString().isBlank()) {
-			newUser.setInvitationCode(registrationRequest.get("invitationCode").toString());
+		if(registrationRequest.getInvitationCode()!=null &&
+				!registrationRequest.getInvitationCode().isBlank()) {
+			newUser.setInvitationCode(registrationRequest.getInvitationCode());
 		}
 		newUser = registeringUserRepository.save(newUser);
 		
@@ -143,7 +146,7 @@ public class UserServiceImpl implements UserService{
 			emailSender.sendMessage(newUser.getEmail(), "It's up to you - Registrazione", message);
 		} catch (MessagingException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Error in sending registration email");
 		}
 		
 		Map<String,Object> response = mapper.convertValue(newUser, Map.class);
@@ -151,7 +154,7 @@ public class UserServiceImpl implements UserService{
 	}
 	
 	@Override
-	public Map<String, Object> secondStepRegistration(Map<String, Object> registrationRequest) throws ValidationFailedException, NotFoundException {
+	public Map<String, Object> secondStepRegistration(Map<String, Object> registrationRequest) throws NotFoundException, PreconditionFailedException, ValidationFailedException {
 		// TODO Auto-generated method stub
 		ObjectMapper mapper = new ObjectMapper();
 		//mapper.setDateFormat(new SimpleDateFormat("YYYY-MM-ddTHH:mm:ss"));

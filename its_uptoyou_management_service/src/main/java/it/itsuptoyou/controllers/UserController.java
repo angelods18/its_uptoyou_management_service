@@ -2,12 +2,18 @@ package it.itsuptoyou.controllers;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.Errors;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,12 +21,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.HttpStatus;
 
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import it.itsuptoyou.collections.User;
 import it.itsuptoyou.exceptions.NotFoundException;
+import it.itsuptoyou.exceptions.PreconditionFailedException;
 import it.itsuptoyou.exceptions.ValidationFailedException;
+import it.itsuptoyou.models.requests.RegistrationFirstStepRequest;
 import it.itsuptoyou.service.UserService;
 import lombok.extern.log4j.Log4j2;
 
@@ -41,16 +53,29 @@ public class UserController {
 	 * { 
 	 *   "username": string,
 	 *   "password": string,
-	 *   "email": string
+	 *   "email": string,
+	 *   "invitationCode": string
 	 * }
 	 * Receive basic information for new user
 	 * Send email with a generated secure code
+	 * 
+	 * Rif: Registrazione base
+	 *  RF_ID 1 
+	 *  SF_1_1
 	 * @return String Success
 	 * @throws NoSuchAlgorithmException 
+	 * @throws PreconditionFailedException
 	 * @throws ValidationException 
 	 */
+	@ApiResponses({
+		@ApiResponse(responseCode = "200", description="newUser"),
+		@ApiResponse(responseCode = "400", description="validation.user.emailAndUsernameAndPasswordCannotBeNull"),
+		@ApiResponse(responseCode = "422", description = "precondition.user.emailOrUsernameAlreadyInUse")
+	})
 	@PostMapping(value="/public/register")
-	public ResponseEntity<?> registerUser(@RequestBody Map<String, Object> registrationRequest) throws NoSuchAlgorithmException, IllegalArgumentException, ValidationFailedException{
+	public ResponseEntity<?> registerUser(@RequestBody @Valid RegistrationFirstStepRequest registrationRequest) throws NoSuchAlgorithmException, PreconditionFailedException, ValidationFailedException{
+		
+		
 		Map<String,Object> newUser= userService.firstStepRegistration(registrationRequest);
 		return ResponseEntity.ok(newUser);
 	}
@@ -65,8 +90,11 @@ public class UserController {
 	 * @throws ValidationException 
 	 * @throws ClassNotFoundException 
 	 */
+	@ApiResponses({
+		@ApiResponse(responseCode = "400", description = "validation.secureCodeNotFound.secureUser")
+	})
 	@PostMapping(value="/public/confirm-registration")
-	public ResponseEntity<?> confirmRegistration(@RequestBody Map<String,Object> confirmRegRequest) throws ValidationFailedException, NotFoundException{
+	public ResponseEntity<?> confirmRegistration(@RequestBody Map<String,Object> confirmRegRequest) throws PreconditionFailedException, ValidationFailedException, NotFoundException{
 		Map<String,Object> registeredUser = userService.secondStepRegistration(confirmRegRequest);
 		return ResponseEntity.ok(registeredUser);
 	}
@@ -213,4 +241,16 @@ public class UserController {
 			return ResponseEntity.badRequest().build();
 		}
 	}
+	
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        return errors;
+    }
 }

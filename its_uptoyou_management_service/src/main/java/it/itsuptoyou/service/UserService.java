@@ -10,13 +10,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import it.itsuptoyou.collections.User;
 import it.itsuptoyou.exceptions.NotFoundException;
+import it.itsuptoyou.exceptions.PreconditionFailedException;
 import it.itsuptoyou.exceptions.ValidationFailedException;
+import it.itsuptoyou.models.requests.RegistrationFirstStepRequest;
 
 public interface UserService {
 
-	Map<String,Object> firstStepRegistration(Map<String,Object> registrationRequest) throws NoSuchAlgorithmException,ValidationFailedException, IllegalArgumentException;
+	Map<String,Object> firstStepRegistration(RegistrationFirstStepRequest registrationRequest) throws NoSuchAlgorithmException,ValidationFailedException, PreconditionFailedException;
 
-	Map<String,Object> secondStepRegistration(Map<String,Object> registrationRequest) throws ValidationFailedException, NotFoundException;
+	Map<String,Object> secondStepRegistration(Map<String,Object> registrationRequest) throws PreconditionFailedException,ValidationFailedException, NotFoundException;
 
 	Map<String, Object> updateUserProfile(Map<String,Object> updateProfileRequest) throws NumberFormatException, NotFoundException, ConcurrentModificationException;
 

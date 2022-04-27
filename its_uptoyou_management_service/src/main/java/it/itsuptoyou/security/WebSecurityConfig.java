@@ -19,7 +19,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable()
             .requiresChannel().and()
-            .authorizeRequests().antMatchers("/ping").permitAll();
+            .authorizeRequests()
+            .antMatchers("/ping").permitAll();
             //.anyRequest().requiresSecure();
     }
 }
