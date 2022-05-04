@@ -26,13 +26,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.HttpStatus;
 
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import it.itsuptoyou.collections.User;
 import it.itsuptoyou.exceptions.NotFoundException;
 import it.itsuptoyou.exceptions.PreconditionFailedException;
 import it.itsuptoyou.exceptions.ValidationFailedException;
+import it.itsuptoyou.models.Profile;
 import it.itsuptoyou.models.requests.RegistrationFirstStepRequest;
+import it.itsuptoyou.models.requests.UpdateProfileRequest;
 import it.itsuptoyou.service.UserService;
 import lombok.extern.log4j.Log4j2;
 
@@ -68,7 +72,7 @@ public class UserController {
 	 * @throws ValidationException 
 	 */
 	@ApiResponses({
-		@ApiResponse(responseCode = "200", description="newUser"),
+		@ApiResponse(responseCode = "200", description="newUser",content = @Content(schema = @Schema(implementation = User.class))),
 		@ApiResponse(responseCode = "400", description="validation.user.emailAndUsernameAndPasswordCannotBeNull"),
 		@ApiResponse(responseCode = "422", description = "precondition.user.emailOrUsernameAlreadyInUse")
 	})
@@ -91,10 +95,11 @@ public class UserController {
 	 * @throws ClassNotFoundException 
 	 */
 	@ApiResponses({
+		@ApiResponse(responseCode = "200", description="registered user",content = @Content(schema = @Schema(implementation = User.class))),
 		@ApiResponse(responseCode = "400", description = "validation.secureCodeNotFound.secureUser")
 	})
 	@PostMapping(value="/public/confirm-registration")
-	public ResponseEntity<?> confirmRegistration(@RequestBody Map<String,Object> confirmRegRequest) throws PreconditionFailedException, ValidationFailedException, NotFoundException{
+	public ResponseEntity<?> confirmRegistration(@RequestBody(required = true)  Map<String,Object> confirmRegRequest) throws PreconditionFailedException, ValidationFailedException, NotFoundException{
 		Map<String,Object> registeredUser = userService.secondStepRegistration(confirmRegRequest);
 		return ResponseEntity.ok(registeredUser);
 	}
@@ -130,9 +135,17 @@ public class UserController {
 	 * @throws NumberFormatException
 	 * @throws ClassNotFoundException
 	 * @throws ConcurrentModificationException
+	 * @throws ValidationFailedException 
 	 */
+	@ApiResponses({
+		@ApiResponse(responseCode = "200", description="registered user",content = @Content(schema = @Schema(implementation = User.class))),
+		@ApiResponse(responseCode = "400", description = "validation.notNull.profile.userId")
+	})
 	@PatchMapping(value="/protected/update-profile")
-	public ResponseEntity<?> updateProfile(@RequestBody Map<String,Object> updateProfileRequest) throws NumberFormatException, NotFoundException, ConcurrentModificationException{
+	public ResponseEntity<?> updateProfile(@RequestBody @Valid final UpdateProfileRequest updateProfileRequest, final Errors errors) throws NumberFormatException, NotFoundException, ConcurrentModificationException, ValidationFailedException{
+		if(errors.hasErrors()) {
+			throw new ValidationFailedException("profile", errors);
+		}
 		Map<String,Object> user = userService.updateUserProfile(updateProfileRequest);
 		return ResponseEntity.ok(user);
 	}

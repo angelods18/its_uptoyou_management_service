@@ -1,12 +1,9 @@
 package it.itsuptoyou.models;
 
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.format.annotation.DateTimeFormat.ISO;
+import javax.validation.constraints.NotBlank;
+
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -15,8 +12,11 @@ import lombok.Data;
 @Data
 public class Profile {
 
+	@NotBlank
 	private String name;
+	@NotBlank
 	private String surname;
+	@JsonFormat(pattern="yyyy-MM-dd")
 	private LocalDate birthdate;
 	private Location address;
 	private String gender;

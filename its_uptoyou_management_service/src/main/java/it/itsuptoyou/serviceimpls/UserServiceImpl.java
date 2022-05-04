@@ -44,6 +44,7 @@ import it.itsuptoyou.exceptions.PreconditionFailedException;
 import it.itsuptoyou.exceptions.ValidationFailedException;
 import it.itsuptoyou.models.Profile;
 import it.itsuptoyou.models.requests.RegistrationFirstStepRequest;
+import it.itsuptoyou.models.requests.UpdateProfileRequest;
 import it.itsuptoyou.repositories.FriendsRepository;
 import it.itsuptoyou.repositories.InvitationRepository;
 import it.itsuptoyou.repositories.RegisteringUserRepository;
@@ -197,17 +198,18 @@ public class UserServiceImpl implements UserService{
 	}
 	
 	@Override
-	public Map<String, Object> updateUserProfile(Map<String, Object> updateProfileRequest) 
+	public Map<String, Object> updateUserProfile(UpdateProfileRequest updateProfileRequest) 
 			throws NumberFormatException, NotFoundException, ConcurrentModificationException {
 		// TODO Auto-generated method stub
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDateFormat(new SimpleDateFormat("YYYY-MM-dd"));
 		mapper.registerModule(new JavaTimeModule());
 		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-		Profile profile = mapper.convertValue(updateProfileRequest.get("profile"), Profile.class);
-		User u = userRepository.findByUserId(Long.parseLong(updateProfileRequest.get("userId").toString()))
+		//Profile profile = mapper.convertValue(updateProfileRequest.get("profile"), Profile.class);
+		Profile profile = updateProfileRequest.getProfile();
+		User u = userRepository.findByUserId(updateProfileRequest.getUserId())
 				.orElseThrow(() -> new NotFoundException("user"));
-		if(updateProfileRequest.get("version")!=u.getVersion()) {
+		if(updateProfileRequest.getVersion()!=u.getVersion()) {
 			throw new ConcurrentModificationException("version");
 		}
 		u.setProfile(profile);

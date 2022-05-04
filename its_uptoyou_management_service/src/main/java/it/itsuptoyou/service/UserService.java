@@ -13,6 +13,7 @@ import it.itsuptoyou.exceptions.NotFoundException;
 import it.itsuptoyou.exceptions.PreconditionFailedException;
 import it.itsuptoyou.exceptions.ValidationFailedException;
 import it.itsuptoyou.models.requests.RegistrationFirstStepRequest;
+import it.itsuptoyou.models.requests.UpdateProfileRequest;
 
 public interface UserService {
 
@@ -20,7 +21,7 @@ public interface UserService {
 
 	Map<String,Object> secondStepRegistration(Map<String,Object> registrationRequest) throws PreconditionFailedException,ValidationFailedException, NotFoundException;
 
-	Map<String, Object> updateUserProfile(Map<String,Object> updateProfileRequest) throws NumberFormatException, NotFoundException, ConcurrentModificationException;
+	Map<String, Object> updateUserProfile(UpdateProfileRequest updateProfileRequest) throws NumberFormatException, NotFoundException, ConcurrentModificationException;
 
 	Boolean updateProfileImage(String username, MultipartFile file) throws NotFoundException;
 	
