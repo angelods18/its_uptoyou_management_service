@@ -31,7 +31,7 @@ import lombok.extern.log4j.Log4j2;
 
 @ControllerAdvice
 @Log4j2
-public class ControllerExceptionHandlerAdvide extends ResponseEntityExceptionHandler {
+public class ControllerExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
 
 	@Autowired
 	private OptionalValidatorCollection optionalValidators;
